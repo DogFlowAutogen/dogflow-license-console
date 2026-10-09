@@ -131,6 +131,34 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 @media(max-width:520px){.payform{grid-template-columns:1fr 1fr}.payform button{grid-column:1/-1}}
 .payform input{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:12.5px var(--font);padding:6px 8px;border-radius:8px;width:100%;min-width:0}
 .payform .btn{padding:6px 10px;font-size:12px}
+.logl{display:flex;flex-direction:column}
+.logl .it{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:6px 0;border-top:1px solid var(--line);font-size:12px}
+.logl .it .d{font:500 11.5px var(--mono);color:var(--muted)}
+.logl .it.revoke .tx{color:var(--bad)}
+/* หน้าต่างยืนยัน (dialog) กลาง: ใช้กับ ต่ออายุ / ระงับ / เปิดคืน / ออกจากคอนโซล */
+.dlg{position:fixed;inset:0;background:rgba(10,8,5,.62);display:grid;place-items:center;z-index:30;padding:16px;overflow:auto}
+.dlg-card{width:100%;max-width:440px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:13px;box-shadow:0 30px 60px -24px rgba(0,0,0,.65)}
+.dlg-hd{display:flex;gap:12px;align-items:center}
+.dlg-ic{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex:none;background:var(--accent-soft);color:var(--accent)}
+.dlg-card.danger .dlg-ic{background:var(--bad-soft);color:var(--bad)}
+.dlg-ic svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.dlg-t{font-size:16px;font-weight:700;line-height:1.3}.dlg-s{font-size:12px;color:var(--muted);font-family:var(--mono);word-break:break-all}
+.dlg-body{font-size:13px;color:var(--muted);margin:0}
+.dlg-rows{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px;margin:0;padding:11px 13px;background:var(--surface2);border-radius:12px}
+.dlg-rows dt{color:var(--muted)}.dlg-rows dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.dlg-f{display:grid;gap:5px;font-size:12.5px;color:var(--muted);font-weight:500}
+.dlg-f input[type=text],.dlg-f input[type=number],.dlg-f select{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:14px var(--font);padding:9px 11px;border-radius:10px;width:100%;min-width:0}
+.dlg-f input:focus,.dlg-f select:focus{outline:2px solid var(--accent);border-color:transparent}
+.dlg-f .hint{font-size:11.5px}.dlg-f .ferr{font-size:11.5px;color:var(--bad)}
+.dlg-f.ck{display:flex;gap:9px;align-items:flex-start;color:var(--fg);font-weight:400;line-height:1.45}.dlg-f.ck input{margin-top:3px;width:16px;height:16px;flex:none;accent-color:var(--bad)}
+.dlg-chips{display:flex;gap:6px;flex-wrap:wrap}
+.dlg-chips button{border:1px solid var(--line);background:var(--surface2);color:var(--muted);font:600 12px var(--font);padding:4px 11px;border-radius:999px;cursor:pointer}
+.dlg-chips button[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.dlg-prev{font-size:12.5px;background:var(--accent-soft);color:var(--fg);border-radius:10px;padding:9px 12px}
+.dlg-prev b{color:var(--accent)}
+.dlg-act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:2px}
+.dlg-act .btn{padding:9px 16px;font-size:13px}.dlg-act .btn:disabled{opacity:.5;cursor:default}
+.dlg-card.danger .btn.primary{background:var(--bad);border-color:var(--bad)}
 .slips{display:flex;flex-direction:column;gap:2px}
 .slips .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .slip{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
@@ -237,6 +265,15 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 </div>
 <input type="file" id="slipFile" accept="image/jpeg,image/png,image/webp,image/*" multiple hidden>
 <div id="slipModal" hidden role="dialog" aria-modal="true" aria-label="สลิปโอนเงิน"><div class="box"><div class="bar"><b id="slipTitle">สลิป</b><button class="btn" id="slipClose">ปิด</button></div><div class="body"><img id="slipImg" alt="สลิปโอนเงิน"></div></div></div>
+<div class="dlg" id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlgTitle"><form class="dlg-card" id="dlgForm" novalidate>
+  <div class="dlg-hd"><span class="dlg-ic" id="dlgIc" aria-hidden="true"></span><div style="min-width:0"><div class="dlg-t" id="dlgTitle"></div><div class="dlg-s" id="dlgSub"></div></div></div>
+  <p class="dlg-body" id="dlgBody" hidden></p>
+  <dl class="dlg-rows" id="dlgRows" hidden></dl>
+  <div id="dlgFields" style="display:grid;gap:11px"></div>
+  <div class="dlg-prev" id="dlgPrev" hidden></div>
+  <div class="msg bad" id="dlgErr" hidden></div>
+  <div class="dlg-act"><button type="button" class="btn" id="dlgCancel">ยกเลิก</button><button type="submit" class="btn primary" id="dlgOk">ตกลง</button></div>
+</form></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -370,6 +407,11 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
         }).join('') + '<div class="pay tot"><span></span><span>รวมของคีย์นี้</span><b>' + esc(fmtMoney(tot)) + '</b><span></span></div>' : '<div class="pay" style="color:var(--muted);border-top:0">ยังไม่มีรายรับ (คีย์ฟรี/ทดลอง)</div>')
       + '<form class="payform" id="payForm"><input id="payAmt" inputmode="decimal" placeholder="ยอด (บาท)" aria-label="ยอดเงิน บาท" autocomplete="off"><input id="payNote" maxlength="60" placeholder="หมายเหตุ เช่น ต่ออายุ" aria-label="หมายเหตุรายรับ" autocomplete="off"><input id="payDate" type="date" value="' + todayIso() + '" max="' + todayIso() + '" aria-label="วันที่รับเงิน"><button class="btn primary" type="submit">+ บันทึก</button></form></div>';
   }
+  function logHtml(l) {
+    var list = (l.log || []).slice().sort(function (a, b) { return new Date(b.at) - new Date(a.at); }).slice(0, 6);
+    if (!list.length) return '';
+    return '<div class="logl"><b style="font-size:13px;margin-bottom:2px">ประวัติการเปลี่ยนแปลง</b>' + list.map(function (x) { return '<div class="it ' + esc(x.type) + '"><span class="d">' + esc(fmtShortDate(x.at)) + '</span><span class="tx">' + esc(x.text) + '</span></div>'; }).join('') + '</div>';
+  }
   function slipsHtml(l) {
     var list = l.slips || [];
     return '<div class="slips" id="slipArea"><div class="hd"><b style="font-size:13px">สลิปโอนเงิน (' + list.length + '/10)</b><span style="flex:1"></span><button class="btn" data-act="slipadd" style="padding:4px 10px;font-size:12px">+ แนบสลิป</button></div>'
@@ -388,13 +430,14 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (e.days !== null && e.days >= 0 && e.days <= 7 ? ' · อีก ' + e.days + ' วัน' : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
       + paysHtml(l)
       + slipsHtml(l)
+      + logHtml(l)
       + '<div><b style="font-size:13px">เครื่องที่ผูกกับคีย์นี้</b>'
       + (l.sessions.length ? l.sessions.map(function (s) {
           var stale = !e.live.some(function (x) { return x.deviceId === s.deviceId; });
           return '<div class="dev"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><div class="t"><b>' + esc(s.deviceName) + '</b><span>ใช้ล่าสุด ' + esc(ago(s.lastSeen)) + (stale ? ' · ไม่ออนไลน์นาน' : '') + '</span></div><button class="x" title="ลบเครื่องนี้" aria-label="ลบเครื่องนี้" data-act="rmdev" data-dev="' + esc(s.deviceId) + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
         }).join('') : '<div class="dev" style="color:var(--muted)">ยังไม่มีเครื่องที่เปิดใช้งาน</div>')
       + '</div><div class="acts">'
-      + (l.expiryDate ? '<button class="btn" data-act="extend"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>ต่ออายุ +30 วัน</button>' : '')
+      + (l.expiryDate ? '<button class="btn" data-act="extend"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>ต่ออายุ…</button>' : '')
       + (l.status === 'active'
           ? '<button class="btn danger" data-act="revoke"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>ระงับคีย์</button>'
           : '<button class="btn" data-act="restore"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>เปิดใช้คีย์อีกครั้ง</button>')
@@ -423,6 +466,138 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     S.token = ''; S.data = null; sdel('dfc_token');
     if (!keepUrl) sdel('dfc_url');
     $('inToken').value = ''; showApp(false);
+  }
+
+  /* ---------- หน้าต่างยืนยัน (dialog) ---------- */
+  var DLG_ICON = {
+    clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    ban: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
+    exit: '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>'
+  };
+  // cfg: { title, icon, sub, body, rows:[[k,v]], fields:[{id,type,label,hint,value,chips,min,max,required,options,placeholder,check(v,all),showIf(all)}],
+  //        preview(vals)->html, confirmText(vals), danger, submit(vals)->Promise } · คืน Promise<boolean> (true = ทำสำเร็จ, false = ยกเลิก)
+  function openDialog(cfg) {
+    return new Promise(function (resolve) {
+      var dlg = document.getElementById('dlg'), card = document.getElementById('dlgForm'), prevFocus = document.activeElement, busy = false, vals = {};
+      card.className = 'dlg-card' + (cfg.danger ? ' danger' : '');
+      document.getElementById('dlgIc').innerHTML = DLG_ICON[cfg.icon] || DLG_ICON.check;
+      document.getElementById('dlgTitle').textContent = cfg.title; document.getElementById('dlgSub').textContent = cfg.sub || '';
+      var body = document.getElementById('dlgBody'); body.hidden = !cfg.body; body.textContent = cfg.body || '';
+      var rows = document.getElementById('dlgRows'); rows.hidden = !(cfg.rows && cfg.rows.length);
+      rows.innerHTML = (cfg.rows || []).map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('');
+      var fields = cfg.fields || [], box = document.getElementById('dlgFields');
+      box.innerHTML = fields.map(function (f) {
+        var id = 'dlg_' + f.id, lab = esc(f.label || ''), h = f.hint ? '<span class="hint">' + esc(f.hint) + '</span>' : '';
+        if (f.type === 'checkbox') return '<label class="dlg-f ck" data-f="' + f.id + '"><input type="checkbox" id="' + id + '"><span>' + lab + '</span></label>';
+        var input = f.type === 'select'
+          ? '<select id="' + id + '">' + (f.options || []).map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('') + '</select>'
+          : '<input id="' + id + '" type="' + (f.type === 'number' ? 'number' : 'text') + '"' + (f.min != null ? ' min="' + f.min + '"' : '') + (f.max != null ? ' max="' + f.max + '"' : '') + (f.inputmode ? ' inputmode="' + f.inputmode + '"' : '') + ' placeholder="' + esc(f.placeholder || '') + '" autocomplete="off" maxlength="' + (f.maxlength || 120) + '">';
+        var chips = f.chips ? '<div class="dlg-chips">' + f.chips.map(function (n) { return '<button type="button" data-chip="' + f.id + '" data-v="' + n + '" aria-pressed="false">' + n + '</button>'; }).join('') + '</div>' : '';
+        return '<label class="dlg-f" data-f="' + f.id + '"><span>' + lab + (f.required ? ' <b style="color:var(--bad)">*</b>' : '') + '</span>' + input + chips + h + '<span class="ferr" data-err="' + f.id + '"></span></label>';
+      }).join('');
+      fields.forEach(function (f) { var el = document.getElementById('dlg_' + f.id); if (f.value != null) { if (f.type === 'checkbox') el.checked = !!f.value; else el.value = f.value; } });
+      var okBtn = document.getElementById('dlgOk'), cancel = document.getElementById('dlgCancel'), errBox = document.getElementById('dlgErr'), prev = document.getElementById('dlgPrev');
+      function read() { fields.forEach(function (f) { var el = document.getElementById('dlg_' + f.id); vals[f.id] = f.type === 'checkbox' ? el.checked : el.value.trim(); }); return vals; }
+      // ตรวจทุกช่อง: คืนจำนวนช่องที่ยังไม่ผ่าน · แสดงข้อความผิดเฉพาะช่องที่ผู้ใช้กรอกแล้วแต่ไม่ถูก
+      function validate(showAll) {
+        read(); var bad = 0;
+        fields.forEach(function (f) {
+          var wrap = box.querySelector('[data-f="' + f.id + '"]'), vis = !f.showIf || f.showIf(vals); wrap.hidden = !vis;
+          var err = '', v = vals[f.id];
+          if (vis) {
+            if (f.required && (f.type === 'checkbox' ? !v : v === '')) { err = f.type === 'checkbox' ? '' : (showAll ? 'จำเป็นต้องกรอก' : ''); bad++; }
+            else if (f.type === 'number' && v !== '' && (isNaN(Number(v)) || Number(v) < (f.min == null ? -Infinity : f.min) || Number(v) > (f.max == null ? Infinity : f.max) || String(v).indexOf('.') >= 0)) { err = 'ใส่ตัวเลขจำนวนเต็ม ' + f.min + ' – ' + f.max; bad++; }
+            else if (f.check && v !== '') { err = f.check(v, vals) || ''; if (err) bad++; }
+          }
+          var eEl = box.querySelector('[data-err="' + f.id + '"]'); if (eEl) eEl.textContent = err;
+        });
+        (cfg.fields || []).forEach(function (f) { if (f.chips) box.querySelectorAll('[data-chip="' + f.id + '"]').forEach(function (b) { b.setAttribute('aria-pressed', String(vals[f.id]) === b.dataset.v); }); });
+        var pv = bad === 0 && cfg.preview ? cfg.preview(vals) : ''; prev.hidden = !pv; prev.innerHTML = pv || '';
+        okBtn.textContent = busy ? 'กำลังดำเนินการ…' : (cfg.confirmText ? cfg.confirmText(vals) : 'ตกลง');
+        okBtn.disabled = busy || bad > 0; return bad;
+      }
+      function close(result) { dlg.hidden = true; document.removeEventListener('keydown', onKey, true); card.onsubmit = null; if (prevFocus && prevFocus.focus) { try { prevFocus.focus(); } catch (e) { } } resolve(result); }
+      function onKey(e) {
+        if (e.key === 'Escape' && !busy) { e.preventDefault(); e.stopPropagation(); close(false); }
+        else if (e.key === 'Tab') { // วนโฟกัสอยู่ในหน้าต่าง
+          var f = Array.prototype.filter.call(card.querySelectorAll('input,select,button'), function (x) { return !x.disabled && x.offsetParent !== null; });
+          if (!f.length) return; var first = f[0], last = f[f.length - 1];
+          if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); } else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
+      card.oninput = card.onchange = function () { errBox.hidden = true; validate(false); };
+      card.onclick = function (e) { var b = e.target.closest('[data-chip]'); if (b) { document.getElementById('dlg_' + b.dataset.chip).value = b.dataset.v; errBox.hidden = true; validate(false); } };
+      cancel.onclick = function () { if (!busy) close(false); };
+      card.onsubmit = function (e) {
+        e.preventDefault(); if (busy) return;
+        if (validate(true)) return;
+        busy = true; errBox.hidden = true; validate(false);
+        Promise.resolve().then(function () { return cfg.submit(read()); }).then(function () { busy = false; close(true); },
+          function (err) { busy = false; errBox.textContent = (err && err.message) || 'ผิดพลาด'; errBox.hidden = false; validate(false); });
+      };
+      document.addEventListener('keydown', onKey, true);
+      errBox.hidden = true; dlg.hidden = false; validate(false);
+      var firstEl = fields.length ? document.getElementById('dlg_' + fields[0].id) : null; (firstEl || okBtn).focus(); if (firstEl && firstEl.select) { try { firstEl.select(); } catch (e) { } }
+    });
+  }
+  function licOf(key) { return S.data.licenses.filter(function (x) { return x.key === key; })[0]; }
+  function liveCount(l) { var st = (S.data.staleDays || 3) * 86400000; return (l.sessions || []).filter(function (s) { return s.lastSeen && Date.now() - new Date(s.lastSeen) <= st; }).length; }
+  function amountOk(v) { var t = String(v).replace(/[,\s฿]/g, ''); if (t === '') return ''; if (!/^\d{1,7}(\.\d{1,2})?$/.test(t)) return 'ยอดเป็นตัวเลข เช่น 990 หรือ 990.50'; return Number(t) > 1000000 ? 'ไม่เกิน 1,000,000 บาท' : ''; }
+  function afterAction(msg) { return load(true).then(function () { toast(msg); }); }
+  function dlgExtend(key) {
+    var l = licOf(key); if (!l || !l.expiryDate) return;
+    var exp = new Date(l.expiryDate), left = Math.ceil((exp - Date.now()) / 86400000);
+    return openDialog({
+      title: 'ต่ออายุ License', icon: 'clock', sub: key,
+      rows: [['ลูกค้า', l.customerName], ['หมดอายุปัจจุบัน', fmtDate(l.expiryDate) + (left >= 0 ? ' · อีก ' + left + ' วัน' : ' · หมดอายุแล้ว')]],
+      fields: [
+        { id: 'days', type: 'number', label: 'ต่ออายุกี่วัน', value: 30, min: 1, max: 3650, required: true, chips: [7, 30, 90, 180, 365] },
+        { id: 'amount', type: 'text', label: 'ยอดที่ได้รับ (บาท)', placeholder: 'เว้นว่าง = ต่ออายุฟรี', hint: 'ถ้าใส่ยอด ระบบบันทึกเป็นรายรับให้อัตโนมัติ', inputmode: 'decimal', check: amountOk },
+        { id: 'note', type: 'text', label: 'หมายเหตุรายรับ', placeholder: 'เช่น โอนผ่านพร้อมเพย์', maxlength: 60, showIf: function (v) { return !!v.amount; } }
+      ],
+      preview: function (v) {
+        var base = Math.max(Date.now(), exp.getTime()), nx = new Date(base + Number(v.days) * 86400000), d2 = Math.ceil((nx - Date.now()) / 86400000);
+        return 'วันหมดอายุใหม่: <b>' + esc(fmtDate(nx.toISOString())) + '</b> (อีก ' + d2 + ' วัน)' + (left < 0 ? ' · นับจากวันนี้ เพราะคีย์หมดอายุแล้ว' : '');
+      },
+      confirmText: function (v) { var a = String(v.amount || '').replace(/[,\s฿]/g, ''); return 'ต่ออายุ +' + (v.days || '…') + ' วัน' + (a && !amountOk(v.amount) ? ' · บันทึก ' + fmtMoney(Number(a)) : ' (ฟรี)'); },
+      submit: function (v) { return api('adminExtend', { key: key, days: Number(v.days), amount: v.amount, note: v.note }).then(function () { return afterAction('ต่ออายุ +' + v.days + ' วันแล้ว' + (v.amount ? ' และบันทึกรายรับ' : '')); }); }
+    });
+  }
+  function dlgRevoke(key) {
+    var l = licOf(key); if (!l) return;
+    return openDialog({
+      title: 'ระงับคีย์นี้?', icon: 'ban', sub: key, danger: true,
+      body: 'ลูกค้าจะใช้งานไม่ได้ทันทีที่แอปเช็คสถานะครั้งถัดไป (เปิดแอปใหม่/กด F5) เปิดใช้คืนได้ภายหลัง',
+      rows: [['ลูกค้า', l.customerName], ['เครื่องที่ใช้อยู่', liveCount(l) + ' / ' + l.maxSessions + ' เครื่อง'], ['หมดอายุ', l.expiryDate ? fmtDate(l.expiryDate) : 'ไม่หมดอายุ']],
+      fields: [
+        { id: 'reason', type: 'select', label: 'เหตุผลที่ระงับ', required: true, options: [['', '— เลือกเหตุผล —'], ['ไม่ชำระเงิน', 'ไม่ชำระเงิน'], ['ขอคืนเงิน', 'ขอคืนเงิน'], ['ผิดเงื่อนไขการใช้งาน', 'ผิดเงื่อนไขการใช้งาน'], ['คีย์ถูกแชร์เกินกำหนด', 'คีย์ถูกแชร์เกินกำหนด'], ['อื่นๆ', 'อื่นๆ']] },
+        { id: 'detail', type: 'text', label: 'รายละเอียดเพิ่มเติม', placeholder: 'เช่น ลูกค้าแจ้งขอยกเลิก', maxlength: 120, hint: 'เลือก "อื่นๆ" ต้องกรอกรายละเอียด', check: function (v, all) { return ''; } },
+        { id: 'ack', type: 'checkbox', label: 'ฉันเข้าใจว่าลูกค้าจะใช้งานไม่ได้ และเหตุผลนี้จะถูกบันทึกในประวัติของคีย์', required: true }
+      ],
+      confirmText: function () { return 'ระงับคีย์นี้'; },
+      submit: function (v) {
+        if (v.reason === 'อื่นๆ' && !v.detail) throw new Error('เลือก "อื่นๆ" กรุณากรอกรายละเอียด');
+        return api('adminSetStatus', { key: key, status: 'revoked', reason: v.reason, detail: v.detail }).then(function () { return afterAction('ระงับคีย์แล้ว'); });
+      }
+    });
+  }
+  function dlgRestore(key) {
+    var l = licOf(key); if (!l) return;
+    return openDialog({
+      title: 'เปิดใช้คีย์อีกครั้ง?', icon: 'check', sub: key,
+      body: 'ลูกค้าจะกลับมาใช้งานได้ในการเช็คสถานะครั้งถัดไป', rows: [['ลูกค้า', l.customerName], ['หมดอายุ', l.expiryDate ? fmtDate(l.expiryDate) : 'ไม่หมดอายุ']],
+      fields: [{ id: 'detail', type: 'text', label: 'หมายเหตุ (ไม่บังคับ)', placeholder: 'เช่น ลูกค้าชำระเงินแล้ว', maxlength: 120 }],
+      confirmText: function () { return 'เปิดใช้คีย์'; },
+      submit: function (v) { return api('adminSetStatus', { key: key, status: 'active', detail: v.detail }).then(function () { return afterAction('เปิดใช้คีย์อีกครั้งแล้ว'); }); }
+    });
+  }
+  function dlgLogout() {
+    return openDialog({
+      title: 'ออกจากคอนโซล?', icon: 'exit', sub: 'DogFlow License Console',
+      body: 'รหัสแอดมินที่จำไว้ในเบราว์เซอร์นี้จะถูกลบ ต้องใส่ ADMIN_TOKEN ใหม่ตอนเข้าครั้งหน้า (ข้อมูลลูกค้า/คีย์ไม่ถูกแตะ)',
+      confirmText: function () { return 'ออกจากคอนโซล'; }, submit: function () { logout(true); }
+    });
   }
 
   /* ---------- สลิปโอนเงิน ---------- */
@@ -509,7 +684,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     }).catch(function (e) { S.token = ''; err.textContent = e.message; err.hidden = false; })
       .then(function () { $('btnLogin').disabled = false; });
   });
-  $('btnLogout').addEventListener('click', function () { logout(true); });
+  $('btnLogout').addEventListener('click', function () { dlgLogout(); });
   $('btnRefresh').addEventListener('click', function () { load(false); });
   $('q').addEventListener('input', function () { S.q = this.value.trim().toLowerCase(); render(); });
 
@@ -544,13 +719,11 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     } else if (a === 'slipdel') {
       if (confirm('ลบสลิปใบนี้? (ไฟล์จะถูกย้ายไปถังขยะใน Google Drive)')) act('adminDeleteSlip', { key: S.sel, slipId: b.dataset.id }, 'ลบสลิปแล้ว');
     } else if (a === 'extend') {
-      var ans = prompt('ต่ออายุ +30 วัน\nได้รับเงินเท่าไร (บาท)?\nเว้นว่างหรือ 0 = ต่ออายุฟรี ไม่บันทึกรายรับ', '');
-      if (ans === null) return;
-      act('adminExtend', { key: S.sel, days: 30, amount: ans }, 'ต่ออายุ +30 วันแล้ว' + (/[1-9]/.test(ans) ? ' และบันทึกรายรับ' : ''));
+      dlgExtend(S.sel);
     } else if (a === 'revoke') {
-      if (confirm('ระงับคีย์นี้? ลูกค้าจะใช้งานต่อไม่ได้จนกว่าจะเปิดใช้คีย์อีกครั้ง')) act('adminSetStatus', { key: S.sel, status: 'revoked' }, 'ระงับคีย์แล้ว');
+      dlgRevoke(S.sel);
     } else if (a === 'restore') {
-      act('adminSetStatus', { key: S.sel, status: 'active' }, 'เปิดใช้คีย์อีกครั้งแล้ว');
+      dlgRestore(S.sel);
     }
   });
   document.addEventListener('keydown', function (ev) {
