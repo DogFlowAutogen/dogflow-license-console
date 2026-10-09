@@ -182,9 +182,50 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;z-index:9;max-width:calc(100vw - 32px)}
 .loading{opacity:.6;pointer-events:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* ===== หน้าโหลด (ตอนกด F5/เปิดคอนโซล) — แบบเดียวกับหน้าโหลดของโปรแกรม DogFlow: โลโก้ใหญ่ + วงแหวนหมุน + Sonar + ชิปสถานะ + แถบ ===== */
+#splash{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:16px;
+  background:radial-gradient(560px 380px at 50% 22%,var(--accent-soft),transparent 62%),radial-gradient(420px 320px at 82% 88%,var(--accent-soft),transparent 65%),var(--bg);transition:opacity .45s ease}
+#splash.hide{opacity:0;pointer-events:none}
+#splash::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(color-mix(in srgb,var(--accent) 7%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--accent) 7%,transparent) 1px,transparent 1px);
+  background-size:34px 34px;-webkit-mask-image:radial-gradient(480px 340px at 50% 42%,#000 30%,transparent 78%);mask-image:radial-gradient(480px 340px at 50% 42%,#000 30%,transparent 78%)}
+#splash>*{position:relative;z-index:1}
+.sp-wrap{position:relative;width:220px;height:220px;display:grid;place-items:center;margin-bottom:10px}
+.sp-logo{position:relative;z-index:2;width:132px;height:132px;border-radius:30px;box-shadow:0 16px 44px -10px color-mix(in srgb,var(--accent) 55%,transparent),inset 0 0 0 1px rgba(255,255,255,.16)}
+.sp-son{position:absolute;width:132px;height:132px;border-radius:30px;border:1.5px solid var(--accent);opacity:0;animation:spSonar 2.4s ease-out infinite}
+.sp-son.s2{animation-delay:.8s}.sp-son.s3{animation-delay:1.6s}
+@keyframes spSonar{0%{transform:scale(1);opacity:.65}100%{transform:scale(1.65);opacity:0}}
+.sp-ring{position:absolute;width:200px;height:200px;z-index:1;animation:spSpin 1.7s linear infinite}
+.sp-ring circle{fill:none;stroke-width:3.5}.sp-ring .bg{stroke:var(--line);opacity:.8}.sp-ring .fg{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:80 285}
+@keyframes spSpin{to{transform:rotate(360deg)}}
+.sp-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.32em;color:var(--accent);text-transform:uppercase}
+.sp-title{font-size:26px;font-weight:700;margin-top:6px;text-align:center}
+.sp-chip{--sc:var(--accent);display:inline-flex;align-items:center;gap:9px;margin-top:10px;max-width:min(92vw,420px);padding:7px 16px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--fg)}
+.sp-chip i{width:8px;height:8px;border-radius:50%;background:var(--sc);flex:none;animation:spBlink 1s ease-in-out infinite}
+.sp-chip[data-st="s"]{--sc:var(--warn);color:var(--warn)}
+@keyframes spBlink{50%{opacity:.3}}
+.sp-bar{width:210px;height:4px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:16px}
+.sp-bar span{display:block;height:100%;width:6%;border-radius:3px;background:linear-gradient(90deg,var(--accent),var(--accent));animation:spFill 6.5s cubic-bezier(.2,.6,.3,1) forwards;transition:width .25s}
+#splash.done .sp-bar span{animation:none;width:100%}
+@keyframes spFill{0%{width:6%}40%{width:62%}100%{width:93%}}
+@media (max-height:680px){.sp-wrap{transform:scale(.72);margin:-34px 0 -30px}}
+@media (max-height:520px){.sp-wrap{transform:scale(.55);margin:-52px 0 -46px}}
+/* ลดการเคลื่อนไหว: ปิดเอฟเฟกต์ตกแต่ง (Sonar) แต่คงตัวบอกความคืบหน้า (วงแหวน จุด แถบ) เพราะเป็นข้อมูลว่ายังทำงานอยู่ */
+@media (prefers-reduced-motion:reduce){.sp-son{display:none}.sp-ring{animation-duration:2.4s}.sp-chip i{animation-duration:1.6s}}
 </style>
 </head>
 <body>
+<!-- หน้าโหลด: แสดงตั้งแต่เฟรมแรก (ก่อน JS ทำงาน) ปิดเมื่อเข้าสู่ระบบอัตโนมัติเสร็จ/ไม่มีรหัสที่จำไว้ -->
+<div id="splash" role="status" aria-live="polite">
+  <div class="sp-wrap"><span class="sp-son"></span><span class="sp-son s2"></span><span class="sp-son s3"></span>
+    <svg class="sp-ring" viewBox="0 0 132 132" aria-hidden="true"><circle class="bg" cx="66" cy="66" r="58"/><circle class="fg" cx="66" cy="66" r="58"/></svg>
+    <svg class="sp-logo" viewBox="0 0 100 100" aria-label="DogFlow"><rect width="100" height="100" fill="#171109"/><g transform="translate(12,13.5) scale(0.76)"><g fill="#ff9e2c"><ellipse cx="24" cy="44" rx="8" ry="10.5" transform="rotate(-24 24 44)"/><ellipse cx="40" cy="26" rx="8.5" ry="11" transform="rotate(-8 40 26)"/><ellipse cx="60" cy="26" rx="8.5" ry="11" transform="rotate(8 60 26)"/><ellipse cx="76" cy="44" rx="8" ry="10.5" transform="rotate(24 76 44)"/><path d="M50 46 C 66 46, 80 60, 76 72 C 72 84, 60 82, 50 82 C 40 82, 28 84, 24 72 C 20 60, 34 46, 50 46 Z"/></g><path d="M44 58 L44 74 L60 66 Z" fill="#171109" stroke="#171109" stroke-width="3" stroke-linejoin="round"/></g></svg>
+  </div>
+  <div class="sp-eyebrow">DOGFLOW · LICENSE CONSOLE</div>
+  <div class="sp-title">กำลังเปิดคอนโซล</div>
+  <div class="sp-chip" id="spChip" data-st="n"><i></i><span id="spStat">กำลังเตรียมหน้าจอ…</span></div>
+  <div class="sp-bar"><span id="spFill"></span></div>
+</div>
 <div class="wrap">
   <div class="top">
     <div class="logo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="6.5" cy="9.5" rx="2" ry="2.7"/><ellipse cx="11" cy="5.8" rx="2" ry="2.7"/><ellipse cx="16.5" cy="6.2" rx="2" ry="2.7"/><ellipse cx="20" cy="11" rx="1.8" ry="2.4"/><path d="M12.3 11.2c-3 0-6 3.6-6 6.3 0 1.9 1.5 2.9 3.2 2.9 1.2 0 1.8-.5 2.8-.5s1.6.5 2.8.5c1.7 0 3.2-1 3.2-2.9 0-2.7-3-6.3-6-6.3z"/></svg></div>
@@ -293,8 +334,10 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   // Content-Type: text/plain = simple request (ไม่มี preflight) · Code.gs อ่าน body เป็น JSON เองอยู่แล้ว
   function api(action, data) {
     var body = Object.assign({ action: action, adminToken: S.token }, data || {});
-    return fetch(S.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
-      .then(function (r) { return r.text(); })
+    // เพดานเวลา 30 วินาที (Apps Script ช้าสุดที่เจอ ~7 วินาที) — เกินแล้วแจ้งข้อผิดพลาดแทนการรอไม่จบ
+    var ctl = typeof AbortController === 'function' ? new AbortController() : null, to = ctl && setTimeout(function () { ctl.abort(); }, 30000);
+    return fetch(S.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { clearTimeout(to); return r.text(); }, function (e) { clearTimeout(to); throw new Error(e && e.name === 'AbortError' ? 'เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); })
       .then(function (t) {
         var j; try { j = JSON.parse(t); } catch (e) { throw new Error('เซิร์ฟเวอร์ไม่ตอบเป็น JSON — ตรวจ URL และว่า Deploy เป็น Web app / Anyone แล้ว'); }
         if (!j.success) throw new Error(j.error || 'เกิดข้อผิดพลาด');
@@ -682,7 +725,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       sset('dfc_token', token, $('inRemember').checked);
       showApp(true); render();
     }).catch(function (e) { S.token = ''; err.textContent = e.message; err.hidden = false; })
-      .then(function () { $('btnLogin').disabled = false; });
+      .then(function () { $('btnLogin').disabled = false; hideSplash(); });
   });
   $('btnLogout').addEventListener('click', function () { dlgLogout(); });
   $('btnRefresh').addEventListener('click', function () { load(false); });
@@ -755,10 +798,27 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       .then(function () { btn.disabled = false; });
   });
 
+  /* ---------- หน้าโหลด ---------- */
+  // กด F5 → แสดงหน้าโหลดทันที · ถ้ามีรหัสที่จำไว้ = เข้าสู่ระบบอัตโนมัติ (รอ Apps Script ราว 2-7 วินาที) แล้วปิดหน้าโหลด
+  // ≤4 วิ ข้อความปกติ · >4 วิ "ใช้เวลานานกว่าปกติ" · ครบ 12 วิ ปิดหน้าโหลดให้เห็นหน้าล็อกอิน (คำขอยังทำต่อ ถ้าสำเร็จจะเข้าคอนโซลเอง)
+  // หน้าโหลดแสดงอย่างน้อย 0.7 วิ กันกะพริบ · ไม่มีรหัสที่จำไว้ = ไม่ต้องรอ ปิดทันที
+  var SPLASH_T0 = Date.now(), splashDone = false;
+  var spChip = document.getElementById('spChip'), spStat = document.getElementById('spStat'), splashEl = document.getElementById('splash');
+  var slowT = setTimeout(function () { if (!splashDone) { spChip.dataset.st = 's'; spStat.textContent = 'ใช้เวลานานกว่าปกติ — กำลังเชื่อมต่อ License Server'; } }, 4000);
+  var capT = setTimeout(function () { hideSplash(true); }, 12000);
+  function hideSplash(now) {
+    if (splashDone) return; splashDone = true; clearTimeout(slowT); clearTimeout(capT);
+    // now = ปิดทันที (ไม่มีรหัสที่จำไว้/ครบเพดานเวลา) · ไม่ใช่ now = แสดงอย่างน้อย 0.7 วิ แล้วเติมแถบเต็มก่อนเฟดออก
+    var wait = now ? 0 : Math.max(0, 700 - (Date.now() - SPLASH_T0));
+    setTimeout(function () { splashEl.classList.add('done'); setTimeout(function () { splashEl.classList.add('hide'); setTimeout(function () { splashEl.hidden = true; }, 480); }, now ? 0 : 260); }, wait);
+  }
+
   /* ---------- เริ่มต้น ---------- */
   $('inUrl').value = sget('dfc_url') || DEFAULT_URL;
   var savedToken = sget('dfc_token');
+  if (!savedToken) hideSplash(true);
   if (savedToken) {
+    spStat.textContent = 'กำลังเข้าสู่ระบบ…';
     $('inToken').value = savedToken; $('inRemember').checked = !!(store('local') && (function () { try { return store('local').getItem('dfc_token'); } catch (e) { return null; } })());
     $('loginForm').requestSubmit ? $('loginForm').requestSubmit() : $('btnLogin').click();
   }
