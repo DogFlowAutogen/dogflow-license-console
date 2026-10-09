@@ -59,22 +59,22 @@ h1,h2{margin:0;font-weight:700}
 .chip[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .search{flex:1;min-width:140px;max-width:260px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:13px var(--font);padding:7px 11px;border-radius:9px}
 .tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:620px}
-th{text-align:left;font-size:11.5px;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:9px 16px;white-space:nowrap}
-td{padding:11px 16px;border-top:1px solid var(--line);vertical-align:middle;white-space:nowrap}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:11.5px;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:9px 11px;white-space:nowrap}
+td{padding:11px 11px;border-top:1px solid var(--line);vertical-align:middle;white-space:nowrap}
 tr.row{cursor:pointer}
 tr.row:hover td{background:var(--surface2)}
 tr.row[aria-selected=true] td{background:var(--accent-soft)}
 .key{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.02em}
 td.no,th.no{width:58px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums;padding-left:8px;padding-right:8px}
 td.no{font:600 12px var(--mono)}
-.cust{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis}
+.cust{font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
 .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.off{background:var(--surface2);color:var(--muted)}
 .seats{display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums;font-size:12.5px}
-.seats .bar{width:64px;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.seats .bar{width:44px;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
 .seats .bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
 .seats.full .bar i{background:var(--bad)}
 .side{display:flex;flex-direction:column;gap:16px;min-width:0}
@@ -108,6 +108,29 @@ td.no{font:600 12px var(--mono)}
 .edit input{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:13px var(--font);padding:7px 10px;border-radius:8px;width:100%}
 .dl a{color:var(--accent);text-decoration:none}.dl a:hover{text-decoration:underline}
 #detail.over{outline:2px dashed var(--accent);outline-offset:-2px}
+.kpi.rev{background:linear-gradient(180deg,var(--accent-soft),var(--surface))}
+.kpi.rev .v{font-size:32px;color:var(--fg)}
+/* จอกว้าง: การ์ดรายรับกว้างกว่า + อีก 4 ช่องในแถวเดียว · จอแคบ: รายรับเต็มแถว แล้วที่เหลือเรียงตามพื้นที่ */
+.kpis{grid-template-columns:minmax(250px,1.7fr) repeat(4,minmax(0,1fr))}
+@media(max-width:1060px){.kpis{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}.kpis .rev{grid-column:1/-1}}
+.spark{width:100%;height:34px;margin-top:6px;overflow:visible}
+.spark path.ln{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spark path.ar{fill:var(--accent);opacity:.12}
+.spark circle{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+td.amt,th.amt{text-align:right;font-variant-numeric:tabular-nums}
+td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:400}
+.pays{display:flex;flex-direction:column}
+.pays .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pay{display:grid;grid-template-columns:62px 1fr auto auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px}
+.pay .d{font:500 11.5px var(--mono);color:var(--muted)}
+.pay .nt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pay b{font-variant-numeric:tabular-nums}
+.pay .x{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:3px 6px;border-radius:6px}.pay .x:hover{color:var(--bad);background:var(--bad-soft)}
+.pay.tot{border-top:2px solid var(--line);font-weight:700}
+.payform{display:grid;grid-template-columns:96px 1fr 130px auto;gap:6px;margin-top:6px}
+@media(max-width:520px){.payform{grid-template-columns:1fr 1fr}.payform button{grid-column:1/-1}}
+.payform input{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:12.5px var(--font);padding:6px 8px;border-radius:8px;width:100%;min-width:0}
+.payform .btn{padding:6px 10px;font-size:12px}
 .slips{display:flex;flex-direction:column;gap:2px}
 .slips .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .slip{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
@@ -158,6 +181,7 @@ td.no{font:600 12px var(--mono)}
   <!-- คอนโซล -->
   <div id="viewApp" class="wrap" hidden>
     <div class="kpis">
+      <div class="kpi rev"><span class="l">รายรับทั้งหมด (บาท)</span><span class="v" id="kRev">–</span><span class="n" id="kRevN"></span><div id="kRevSpark"></div></div>
       <div class="kpi"><span class="l">คีย์ที่ใช้งานอยู่</span><span class="v" id="kActive">–</span><span class="n" id="kActiveN"></span></div>
       <div class="kpi"><span class="l">เครื่องที่ออนไลน์</span><span class="v" id="kDev">–</span><span class="n" id="kDevN"></span></div>
       <div class="kpi soon"><span class="l">ใกล้หมดอายุ (≤ 7 วัน)</span><span class="v" id="kSoon">–</span><span class="n">ควรติดต่อต่ออายุ</span></div>
@@ -178,7 +202,7 @@ td.no{font:600 12px var(--mono)}
           <input class="search" id="q" placeholder="ค้นหาคีย์ / ชื่อลูกค้า" aria-label="ค้นหา">
         </header>
         <div class="tw"><table>
-          <thead><tr><th class="no">ลำดับ</th><th>คีย์</th><th>ลูกค้า</th><th>สถานะ</th><th>เครื่อง</th><th>หมดอายุ</th></tr></thead>
+          <thead><tr><th class="no">ลำดับ</th><th>คีย์</th><th>ลูกค้า</th><th>สถานะ</th><th>เครื่อง</th><th>หมดอายุ</th><th class="amt">รับแล้ว (บาท)</th></tr></thead>
           <tbody id="rows"></tbody>
         </table></div>
       </section>
@@ -189,6 +213,7 @@ td.no{font:600 12px var(--mono)}
           <header><h2>สร้างคีย์ใหม่</h2></header>
           <form class="form" id="createForm">
             <label>ชื่อลูกค้า<input id="fc" maxlength="80" placeholder="เช่น ร้านน้องหมาสโตร์" required></label>
+            <label>ยอดที่รับ (บาท) <span class="opt">(ไม่บังคับ · ว่าง = คีย์ฟรี/ทดลอง)</span><input id="fam" inputmode="decimal" placeholder="เช่น 990" autocomplete="off"></label>
             <label>ช่องทางติดต่อ <span class="opt">(ไม่บังคับ)</span><input id="fct" maxlength="120" placeholder="ลิงก์ Facebook / LINE ID / เบอร์โทร" autocomplete="off"></label>
             <label>อ้างอิงการชำระ / ราคา <span class="opt">(ไม่บังคับ)</span><input id="fpay" maxlength="120" placeholder="เช่น โอน 990 บาท 9 ต.ค." autocomplete="off"></label>
             <label>หมายเหตุ <span class="opt">(ไม่บังคับ)</span><input id="fnote" maxlength="300" placeholder="เช่น ทดลองใช้ 7 วัน" autocomplete="off"></label>
@@ -243,6 +268,29 @@ td.no{font:600 12px var(--mono)}
   /* ---------- helpers ---------- */
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var TH_M = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  // เงินบาท: มีทศนิยมเฉพาะเมื่อมีเศษสตางค์ · คั่นหลักพัน
+  function fmtMoney(n) { n = Number(n) || 0; return '฿' + n.toLocaleString('th-TH', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 }); }
+  function fmtShortDate(iso) { var d = new Date(iso); return d.getDate() + ' ' + TH_M[d.getMonth()]; }
+  function revenueSummary(licenses) {
+    var now = new Date(), total = 0, month = 0, paying = 0, months = [];
+    for (var i = 5; i >= 0; i--) { var d = new Date(now.getFullYear(), now.getMonth() - i, 1); months.push({ y: d.getFullYear(), m: d.getMonth(), sum: 0, label: TH_M[d.getMonth()] }); }
+    licenses.forEach(function (l) {
+      var s = 0;
+      (l.payments || []).forEach(function (p) {
+        var a = Number(p.amount) || 0, d = new Date(p.at); s += a; total += a;
+        if (d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()) month += a;
+        months.forEach(function (mm) { if (mm.y === d.getFullYear() && mm.m === d.getMonth()) mm.sum += a; });
+      });
+      if (s > 0) paying++;
+    });
+    return { total: Math.round(total * 100) / 100, month: Math.round(month * 100) / 100, paying: paying, months: months };
+  }
+  function sparkSvg(months) {
+    var w = 240, h = 34, max = Math.max.apply(null, months.map(function (m) { return m.sum; })) || 1, n = months.length;
+    var pts = months.map(function (m, i) { return [4 + i * (w - 8) / (n - 1), h - 5 - (m.sum / max) * (h - 12)]; });
+    var dd = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' '), l = pts[n - 1];
+    return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" aria-label="รายรับ 6 เดือนล่าสุด: ' + months.map(function (m) { return m.label + ' ' + fmtMoney(m.sum); }).join(', ') + '"><path class="ar" d="' + dd + ' L' + l[0] + ' ' + h + ' L' + pts[0][0] + ' ' + h + 'Z"/><path class="ln" d="' + dd + '"/><circle cx="' + l[0].toFixed(1) + '" cy="' + l[1].toFixed(1) + '" r="4"/></svg>';
+  }
   function fmtDate(iso) { if (!iso) return 'ไม่หมดอายุ'; var d = new Date(iso); return d.getDate() + ' ' + TH_M[d.getMonth()] + ' ' + (d.getFullYear() + 543); }
   function ago(iso) {
     if (!iso) return 'ไม่ทราบ';
@@ -258,7 +306,8 @@ td.no{font:600 12px var(--mono)}
     var live = l.sessions.filter(function (s) { return s.lastSeen && now - new Date(s.lastSeen) <= stale; });
     var days = l.expiryDate ? Math.ceil((new Date(l.expiryDate) - now) / 86400000) : null;
     var st = l.status !== 'active' ? 'off' : (days !== null && days < 0) ? 'bad' : (days !== null && days <= 7) ? 'soon' : 'ok';
-    return { l: l, live: live, days: days, st: st };
+    var paid = (l.payments || []).reduce(function (a, p) { return a + Number(p.amount || 0); }, 0);
+    return { l: l, live: live, days: days, st: st, paid: Math.round(paid * 100) / 100 };
   }
   var LBL = { ok: 'ใช้งานอยู่', soon: 'ใกล้หมดอายุ', bad: 'หมดอายุ', off: 'ระงับ' };
   var PILL = { ok: 'ok', soon: 'warn', bad: 'bad', off: 'off' };
@@ -275,6 +324,10 @@ td.no{font:600 12px var(--mono)}
     $('kDev').textContent = devs; $('kDevN').textContent = active ? 'เฉลี่ย ' + (devs / active).toFixed(1) + ' เครื่องต่อคีย์' : '';
     $('kSoon').textContent = soon;
     $('kVio').textContent = vio.length; $('kVioN').textContent = 'ใน 30 วันล่าสุด';
+    var rv = revenueSummary(S.data.licenses);
+    $('kRev').textContent = fmtMoney(rv.total);
+    $('kRevN').textContent = rv.total ? 'เดือนนี้ ' + fmtMoney(rv.month) + ' · จาก ' + rv.paying + ' คีย์ที่ชำระแล้ว' : 'ยังไม่มีการบันทึกรายรับ — เพิ่มได้ที่รายละเอียดคีย์';
+    $('kRevSpark').innerHTML = rv.total ? sparkSvg(rv.months) : '';
 
     var list = all.filter(function (e) {
       if (S.flt === 'ok' && e.st !== 'ok') return false;
@@ -286,8 +339,8 @@ td.no{font:600 12px var(--mono)}
     $('listCount').textContent = list.length === all.length ? all.length + ' คีย์' : 'แสดง ' + list.length + ' จาก ' + all.length + ' คีย์';
     $('rows').innerHTML = list.length ? list.map(function (e) {
       var full = e.live.length >= e.l.maxSessions;
-      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + '</td></tr>';
-    }).join('') : '<tr><td colspan="6" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
+      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + '</td><td class="amt' + (e.paid ? '' : ' zero') + '">' + (e.paid ? fmtMoney(e.paid) : '–') + '</td></tr>';
+    }).join('') : '<tr><td colspan="7" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
 
     renderDetail(all);
     $('vio').innerHTML = S.data.violations.length ? S.data.violations.slice(0, 8).map(function (v) {
@@ -308,6 +361,15 @@ td.no{font:600 12px var(--mono)}
       + '<div class="acts"><button class="btn primary" data-act="saveedit">บันทึก</button><button class="btn" data-act="canceledit">ยกเลิก</button></div></div>';
   }
   function fmtSize(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  function todayIso() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function paysHtml(l) {
+    var list = (l.payments || []).slice().sort(function (a, b) { return new Date(b.at) - new Date(a.at); }), tot = list.reduce(function (a, p) { return a + Number(p.amount || 0); }, 0);
+    return '<div class="pays" id="payArea"><div class="hd"><b style="font-size:13px">รายรับ (บาท)</b></div>'
+      + (list.length ? list.map(function (p) {
+          return '<div class="pay"><span class="d">' + esc(fmtShortDate(p.at)) + '</span><span class="nt" title="' + esc(p.note) + '">' + esc(p.note || '-') + '</span><b>' + esc(fmtMoney(p.amount)) + '</b><button class="x" data-act="paydel" data-id="' + esc(p.id) + '" aria-label="ลบรายการนี้" title="ลบรายการ">✕</button></div>';
+        }).join('') + '<div class="pay tot"><span></span><span>รวมของคีย์นี้</span><b>' + esc(fmtMoney(tot)) + '</b><span></span></div>' : '<div class="pay" style="color:var(--muted);border-top:0">ยังไม่มีรายรับ (คีย์ฟรี/ทดลอง)</div>')
+      + '<form class="payform" id="payForm"><input id="payAmt" inputmode="decimal" placeholder="ยอด (บาท)" aria-label="ยอดเงิน บาท" autocomplete="off"><input id="payNote" maxlength="60" placeholder="หมายเหตุ เช่น ต่ออายุ" aria-label="หมายเหตุรายรับ" autocomplete="off"><input id="payDate" type="date" value="' + todayIso() + '" max="' + todayIso() + '" aria-label="วันที่รับเงิน"><button class="btn primary" type="submit">+ บันทึก</button></form></div>';
+  }
   function slipsHtml(l) {
     var list = l.slips || [];
     return '<div class="slips" id="slipArea"><div class="hd"><b style="font-size:13px">สลิปโอนเงิน (' + list.length + '/10)</b><span style="flex:1"></span><button class="btn" data-act="slipadd" style="padding:4px 10px;font-size:12px">+ แนบสลิป</button></div>'
@@ -324,6 +386,7 @@ td.no{font:600 12px var(--mono)}
     box.innerHTML = '<div class="det"><div><div class="sub">คีย์ที่เลือก · ลำดับที่ ' + e.no + ' จาก ' + all.length + '</div><div class="kk"><span>' + esc(l.key) + '</span><button class="btn" data-act="copy" style="padding:4px 9px;font-size:12px">คัดลอก</button></div></div>'
       + (S.editing === l.key ? editForm(l) : '')
       + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (e.days !== null && e.days >= 0 && e.days <= 7 ? ' · อีก ' + e.days + ' วัน' : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
+      + paysHtml(l)
       + slipsHtml(l)
       + '<div><b style="font-size:13px">เครื่องที่ผูกกับคีย์นี้</b>'
       + (l.sessions.length ? l.sessions.map(function (s) {
@@ -472,6 +535,8 @@ td.no{font:600 12px var(--mono)}
       var key = S.sel, name = document.getElementById('ecName').value.trim();
       if (!name) { toast('⚠️ กรุณาใส่ชื่อลูกค้า'); return; }
       act('adminUpdate', { key: key, customerName: name, contact: document.getElementById('ecContact').value, payment: document.getElementById('ecPay').value, note: document.getElementById('ecNote').value }, 'บันทึกข้อมูลลูกค้าแล้ว').then(function () { S.editing = null; render(); });
+    } else if (a === 'paydel') {
+      if (confirm('ลบรายการรายรับนี้? ยอดรวมจะลดลงตาม')) act('adminDeletePayment', { key: S.sel, paymentId: b.dataset.id }, 'ลบรายการรายรับแล้ว');
     } else if (a === 'slipadd') {
       document.getElementById('slipFile').click();
     } else if (a === 'slipview') {
@@ -479,7 +544,9 @@ td.no{font:600 12px var(--mono)}
     } else if (a === 'slipdel') {
       if (confirm('ลบสลิปใบนี้? (ไฟล์จะถูกย้ายไปถังขยะใน Google Drive)')) act('adminDeleteSlip', { key: S.sel, slipId: b.dataset.id }, 'ลบสลิปแล้ว');
     } else if (a === 'extend') {
-      act('adminExtend', { key: S.sel, days: 30 }, 'ต่ออายุ +30 วันแล้ว');
+      var ans = prompt('ต่ออายุ +30 วัน\nได้รับเงินเท่าไร (บาท)?\nเว้นว่างหรือ 0 = ต่ออายุฟรี ไม่บันทึกรายรับ', '');
+      if (ans === null) return;
+      act('adminExtend', { key: S.sel, days: 30, amount: ans }, 'ต่ออายุ +30 วันแล้ว' + (/[1-9]/.test(ans) ? ' และบันทึกรายรับ' : ''));
     } else if (a === 'revoke') {
       if (confirm('ระงับคีย์นี้? ลูกค้าจะใช้งานต่อไม่ได้จนกว่าจะเปิดใช้คีย์อีกครั้ง')) act('adminSetStatus', { key: S.sel, status: 'revoked' }, 'ระงับคีย์แล้ว');
     } else if (a === 'restore') {
@@ -490,15 +557,23 @@ td.no{font:600 12px var(--mono)}
     if (ev.key === 'Enter') { var r = ev.target.closest && ev.target.closest('tr.row'); if (r) { S.sel = r.dataset.k; render(); } }
   });
 
+  document.addEventListener('submit', function (ev) {
+    if (ev.target.id !== 'payForm') return;
+    ev.preventDefault();
+    var key = S.sel, amt = document.getElementById('payAmt').value.trim();
+    if (!key) return;
+    if (!amt) { toast('⚠️ ใส่ยอดเงิน (บาท)'); return; }
+    act('adminAddPayment', { key: key, amount: amt, note: document.getElementById('payNote').value, paidAt: document.getElementById('payDate').value }, 'บันทึกรายรับแล้ว');
+  });
   $('createForm').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var out = $('genOut'), btn = $('gen'); out.hidden = true; btn.disabled = true;
-    api('adminCreate', { customerName: $('fc').value.trim(), contact: $('fct').value, payment: $('fpay').value, note: $('fnote').value, days: $('fd').value.trim(), maxSessions: $('fm').value })
+    api('adminCreate', { customerName: $('fc').value.trim(), amount: $('fam').value, contact: $('fct').value, payment: $('fpay').value, note: $('fnote').value, days: $('fd').value.trim(), maxSessions: $('fm').value })
       .then(function (r) {
         out.className = 'msg ok'; out.hidden = false;
         out.innerHTML = 'สร้างแล้ว: <b class="key">' + esc(r.key) + '</b> — ส่งคีย์นี้ให้ลูกค้า';
         var slipFiles = $('fslip').files;
-        $('fc').value = ''; $('fct').value = ''; $('fpay').value = ''; $('fnote').value = ''; S.sel = r.key; S.editing = null;
+        $('fc').value = ''; $('fam').value = ''; $('fct').value = ''; $('fpay').value = ''; $('fnote').value = ''; S.sel = r.key; S.editing = null;
         return load(true).then(function () {
           if (slipFiles && slipFiles.length) { var fl = Array.prototype.slice.call(slipFiles); $('fslip').value = ''; return uploadSlips(r.key, fl); }
         });
