@@ -64,6 +64,8 @@ tr.row{cursor:pointer}
 tr.row:hover td{background:var(--surface2)}
 tr.row[aria-selected=true] td{background:var(--accent-soft)}
 .key{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.02em}
+td.no,th.no{width:44px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;padding-right:6px}
+td.no{font:600 12px var(--mono)}
 .cust{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
@@ -163,7 +165,7 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
     <div class="main">
       <section class="card" id="listCard">
         <header>
-          <h2>คีย์ทั้งหมด</h2>
+          <h2>คีย์ทั้งหมด <span id="listCount" class="sub" style="font-weight:500;margin-left:6px"></span></h2>
           <div class="seg" id="flt">
             <button class="chip" data-f="all" aria-pressed="true">ทั้งหมด</button>
             <button class="chip" data-f="ok" aria-pressed="false">ใช้งานอยู่</button>
@@ -174,7 +176,7 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
           <input class="search" id="q" placeholder="ค้นหาคีย์ / ชื่อลูกค้า" aria-label="ค้นหา">
         </header>
         <div class="tw"><table>
-          <thead><tr><th>คีย์</th><th>ลูกค้า</th><th>สถานะ</th><th>เครื่อง</th><th>หมดอายุ</th></tr></thead>
+          <thead><tr><th class="no">#</th><th>คีย์</th><th>ลูกค้า</th><th>สถานะ</th><th>เครื่อง</th><th>หมดอายุ</th></tr></thead>
           <tbody id="rows"></tbody>
         </table></div>
       </section>
@@ -261,7 +263,7 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
 
   /* ---------- วาดหน้า ---------- */
   function render() {
-    var all = S.data.licenses.map(enrich);
+    var all = S.data.licenses.map(function (l, i) { var e = enrich(l); e.no = i + 1; return e; });
     var active = all.filter(function (e) { return e.st === 'ok' || e.st === 'soon'; }).length;
     var devs = all.reduce(function (n, e) { return n + e.live.length; }, 0);
     var soon = all.filter(function (e) { return e.st === 'soon'; }).length;
@@ -279,10 +281,11 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
       return !S.q || (e.l.key + ' ' + e.l.customerName).toLowerCase().indexOf(S.q) >= 0;
     });
     if (!all.some(function (e) { return e.l.key === S.sel; })) S.sel = all.length ? all[0].l.key : null;
+    $('listCount').textContent = list.length === all.length ? all.length + ' คีย์' : 'แสดง ' + list.length + ' จาก ' + all.length + ' คีย์';
     $('rows').innerHTML = list.length ? list.map(function (e) {
       var full = e.live.length >= e.l.maxSessions;
-      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + '</td></tr>';
-    }).join('') : '<tr><td colspan="5" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
+      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + '</td></tr>';
+    }).join('') : '<tr><td colspan="6" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
 
     renderDetail(all);
     $('vio').innerHTML = S.data.violations.length ? S.data.violations.slice(0, 8).map(function (v) {
@@ -316,7 +319,7 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
     var e = all.filter(function (x) { return x.l.key === S.sel; })[0], box = $('detail');
     if (!e) { box.innerHTML = '<div class="empty">เลือกคีย์จากตารางเพื่อดูรายละเอียด</div>'; return; }
     var l = e.l;
-    box.innerHTML = '<div class="det"><div><div class="sub">คีย์ที่เลือก</div><div class="kk"><span>' + esc(l.key) + '</span><button class="btn" data-act="copy" style="padding:4px 9px;font-size:12px">คัดลอก</button></div></div>'
+    box.innerHTML = '<div class="det"><div><div class="sub">คีย์ที่เลือก · ลำดับที่ ' + e.no + ' จาก ' + all.length + '</div><div class="kk"><span>' + esc(l.key) + '</span><button class="btn" data-act="copy" style="padding:4px 9px;font-size:12px">คัดลอก</button></div></div>'
       + (S.editing === l.key ? editForm(l) : '')
       + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (e.days !== null && e.days >= 0 && e.days <= 7 ? ' · อีก ' + e.days + ' วัน' : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
       + slipsHtml(l)
