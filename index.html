@@ -103,6 +103,20 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
 .edit label{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:500}
 .edit input{border:1px solid var(--line);background:var(--bg);color:var(--fg);font:13px var(--font);padding:7px 10px;border-radius:8px;width:100%}
 .dl a{color:var(--accent);text-decoration:none}.dl a:hover{text-decoration:underline}
+#detail.over{outline:2px dashed var(--accent);outline-offset:-2px}
+.slips{display:flex;flex-direction:column;gap:2px}
+.slips .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.slip{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px}
+.slip .t{flex:1;min-width:0}.slip .t b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.slip .t span{color:var(--muted);font-size:11.5px}
+.slip .btn{padding:4px 10px;font-size:12px}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:10px;text-align:center;color:var(--muted);font-size:12px}
+.drop.over{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+#slipModal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:grid;place-items:center;z-index:20;padding:16px}
+#slipModal .box{background:var(--surface);border:1px solid var(--line);border-radius:14px;max-width:min(560px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden}
+#slipModal .bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+#slipModal .bar b{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#slipModal img{max-width:100%;max-height:calc(100vh - 120px);object-fit:contain;display:block;margin:0 auto;background:#fff}
+#slipModal .body{overflow:auto;padding:10px;text-align:center}
 .msg{font-size:13px;border-radius:10px;padding:10px 12px}
 .msg.bad{background:var(--bad-soft);color:var(--bad)} .msg.ok{background:var(--ok-soft);color:var(--ok)}
 .login{display:grid;place-items:center;padding-block:30px}
@@ -179,7 +193,8 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
               <label>จำนวนเครื่อง<select id="fm"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>10</option></select></label>
             </div>
             <button class="btn primary" id="gen" type="submit"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>สร้างคีย์</button>
-            <div class="hint">เก็บเท่าที่จำเป็นต่อการดูแลลูกค้า — ไม่ต้องใส่เลขบัตรประชาชน ที่อยู่ หรือรหัสผ่านของลูกค้า</div>
+            <label>แนบสลิปโอนเงิน <span class="opt">(ไม่บังคับ · JPG/PNG · ย่อรูปให้อัตโนมัติ)</span><input id="fslip" type="file" accept="image/*" multiple></label>
+            <div class="hint">เก็บเท่าที่จำเป็นต่อการดูแลลูกค้า — ไม่ต้องใส่เลขบัตรประชาชน ที่อยู่ หรือรหัสผ่านของลูกค้า · สลิปเก็บเป็นไฟล์ส่วนตัวใน Google Drive ของคุณ</div>
             <div class="msg ok" id="genOut" hidden></div>
           </form>
         </section>
@@ -191,6 +206,8 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
     </div>
   </div>
 </div>
+<input type="file" id="slipFile" accept="image/jpeg,image/png,image/webp,image/*" multiple hidden>
+<div id="slipModal" hidden role="dialog" aria-modal="true" aria-label="สลิปโอนเงิน"><div class="box"><div class="bar"><b id="slipTitle">สลิป</b><button class="btn" id="slipClose">ปิด</button></div><div class="body"><img id="slipImg" alt="สลิปโอนเงิน"></div></div></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -285,6 +302,16 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
       + '<label>หมายเหตุ<input id="ecNote" maxlength="300" value="' + esc(l.note) + '" autocomplete="off"></label>'
       + '<div class="acts"><button class="btn primary" data-act="saveedit">บันทึก</button><button class="btn" data-act="canceledit">ยกเลิก</button></div></div>';
   }
+  function fmtSize(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  function slipsHtml(l) {
+    var list = l.slips || [];
+    return '<div class="slips" id="slipArea"><div class="hd"><b style="font-size:13px">สลิปโอนเงิน (' + list.length + '/10)</b><span style="flex:1"></span><button class="btn" data-act="slipadd" style="padding:4px 10px;font-size:12px">+ แนบสลิป</button></div>'
+      + (list.length ? list.map(function (x) {
+          return '<div class="slip"><div class="t"><b>' + esc(fmtDate(x.at)) + ' · ' + esc(new Date(x.at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })) + '</b><span>' + esc(fmtSize(x.size)) + '</span></div>'
+            + '<button class="btn" data-act="slipview" data-id="' + esc(x.id) + '">ดู</button><button class="btn danger" data-act="slipdel" data-id="' + esc(x.id) + '">ลบ</button></div>';
+        }).join('') : '<div class="drop" id="slipDrop">ลากรูปสลิปมาวางที่นี่ · กด "แนบสลิป" · หรือวางภาพที่คัดลอกไว้ (Ctrl+V)</div>')
+      + '</div>';
+  }
   function renderDetail(all) {
     var e = all.filter(function (x) { return x.l.key === S.sel; })[0], box = $('detail');
     if (!e) { box.innerHTML = '<div class="empty">เลือกคีย์จากตารางเพื่อดูรายละเอียด</div>'; return; }
@@ -292,6 +319,7 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
     box.innerHTML = '<div class="det"><div><div class="sub">คีย์ที่เลือก</div><div class="kk"><span>' + esc(l.key) + '</span><button class="btn" data-act="copy" style="padding:4px 9px;font-size:12px">คัดลอก</button></div></div>'
       + (S.editing === l.key ? editForm(l) : '')
       + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (e.days !== null && e.days >= 0 && e.days <= 7 ? ' · อีก ' + e.days + ' วัน' : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
+      + slipsHtml(l)
       + '<div><b style="font-size:13px">เครื่องที่ผูกกับคีย์นี้</b>'
       + (l.sessions.length ? l.sessions.map(function (s) {
           var stale = !e.live.some(function (x) { return x.deviceId === s.deviceId; });
@@ -316,7 +344,7 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
   }
   function act(action, data, okMsg) {
     return api(action, data).then(function (r) { toast(okMsg); return load(true).then(function () { return r; }); })
-      .catch(function (e) { toast('⚠️ ' + e.message); });
+      .catch(function (e) { toast('⚠️ ' + slipErr(e)); });
   }
 
   function showApp(on) {
@@ -328,6 +356,75 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
     if (!keepUrl) sdel('dfc_url');
     $('inToken').value = ''; showApp(false);
   }
+
+  /* ---------- สลิปโอนเงิน ---------- */
+  var SLIP_MAX_DIM = 1600;
+  // ย่อรูปในเบราว์เซอร์ก่อนส่ง: ด้านยาวสุด 1600px แปลงเป็น JPEG แล้วลดคุณภาพจนไม่เกิน ~1.2MB (พื้นขาวรองกรณี PNG โปร่งใส)
+  function compressImage(file) {
+    return createImageBitmap(file).then(function (bmp) {
+      var sc = Math.min(1, SLIP_MAX_DIM / Math.max(bmp.width, bmp.height)), w = Math.round(bmp.width * sc), h = Math.round(bmp.height * sc);
+      var cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(bmp, 0, 0, w, h);
+      if (bmp.close) bmp.close();
+      return new Promise(function (resolve, reject) {
+        (function tryQ(q) {
+          cv.toBlob(function (blob) {
+            if (!blob) return reject(new Error('แปลงรูปไม่สำเร็จ'));
+            if (blob.size > 1.2 * 1048576 && q > 0.5) return tryQ(q - 0.1);
+            var fr = new FileReader();
+            fr.onload = function () { resolve({ mime: 'image/jpeg', data: String(fr.result).split(',')[1], size: blob.size }); };
+            fr.onerror = function () { reject(new Error('อ่านรูปไม่สำเร็จ')); };
+            fr.readAsDataURL(blob);
+          }, 'image/jpeg', q);
+        })(0.85);
+      });
+    }, function () { throw new Error('อ่านไฟล์รูปนี้ไม่ได้ (รองรับ JPG / PNG / WebP)'); });
+  }
+  function slipErr(e) {
+    var m = e && e.message || 'ผิดพลาด';
+    return /Drive|DriveApp|Authorization|สิทธิ์/i.test(m) ? 'ยังไม่ได้อนุญาตสิทธิ์ Google Drive — เปิด Apps Script แล้ว Run ฟังก์ชัน setupSlips หนึ่งครั้ง' : m;
+  }
+  function uploadSlips(key, files) {
+    var imgs = Array.prototype.filter.call(files, function (f) { return /^image\//.test(f.type); });
+    if (!imgs.length) { toast('⚠️ ไม่พบไฟล์รูป'); return Promise.resolve(); }
+    var ok = 0, i = 0;
+    function next() {
+      if (i >= imgs.length) return load(true).then(function () { if (ok) toast('แนบสลิปแล้ว ' + ok + ' ใบ'); });
+      toast('กำลังอัปโหลดสลิป ' + (i + 1) + '/' + imgs.length + '…');
+      return compressImage(imgs[i++]).then(function (r) { return api('adminUploadSlip', { key: key, mime: r.mime, data: r.data }); })
+        .then(function () { ok++; }, function (e) { toast('⚠️ ' + slipErr(e)); })
+        .then(next);
+    }
+    return next();
+  }
+  function viewSlip(key, id) {
+    toast('กำลังโหลดสลิป…');
+    api('adminGetSlip', { key: key, slipId: id }).then(function (r) {
+      document.getElementById('slipImg').src = 'data:' + r.mime + ';base64,' + r.data;
+      document.getElementById('slipTitle').textContent = r.name || 'สลิป';
+      document.getElementById('slipModal').hidden = false;
+      document.getElementById('toast').hidden = true;
+    }).catch(function (e) { toast('⚠️ ' + slipErr(e)); });
+  }
+  function closeSlip() { document.getElementById('slipModal').hidden = true; document.getElementById('slipImg').removeAttribute('src'); }
+  document.getElementById('slipClose').addEventListener('click', closeSlip);
+  document.getElementById('slipModal').addEventListener('click', function (e) { if (e.target.id === 'slipModal') closeSlip(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSlip(); });
+  document.getElementById('slipFile').addEventListener('change', function () {
+    var files = Array.prototype.slice.call(this.files), key = S.sel; this.value = ''; // คัดลอกก่อนล้างค่า (FileList จะว่างตามช่อง)
+    if (key && files && files.length) uploadSlips(key, files);
+  });
+  // ลากรูปมาวางที่ส่วนรายละเอียด / วางภาพจากคลิปบอร์ด (Ctrl+V)
+  var detailBox = document.getElementById('detail');
+  detailBox.addEventListener('dragover', function (e) { if (S.sel) { e.preventDefault(); detailBox.classList.add('over'); } });
+  detailBox.addEventListener('dragleave', function () { detailBox.classList.remove('over'); });
+  detailBox.addEventListener('drop', function (e) { detailBox.classList.remove('over'); if (!S.sel || !e.dataTransfer || !e.dataTransfer.files.length) return; e.preventDefault(); uploadSlips(S.sel, e.dataTransfer.files); });
+  document.addEventListener('paste', function (e) {
+    var t = e.target && e.target.tagName;
+    if (!S.sel || document.getElementById('viewApp').hidden || t === 'INPUT' || t === 'TEXTAREA') return;
+    var files = e.clipboardData && e.clipboardData.files;
+    if (files && files.length) { e.preventDefault(); uploadSlips(S.sel, files); }
+  });
 
   /* ---------- events ---------- */
   $('loginForm').addEventListener('submit', function (ev) {
@@ -370,6 +467,12 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
       var key = S.sel, name = document.getElementById('ecName').value.trim();
       if (!name) { toast('⚠️ กรุณาใส่ชื่อลูกค้า'); return; }
       act('adminUpdate', { key: key, customerName: name, contact: document.getElementById('ecContact').value, payment: document.getElementById('ecPay').value, note: document.getElementById('ecNote').value }, 'บันทึกข้อมูลลูกค้าแล้ว').then(function () { S.editing = null; render(); });
+    } else if (a === 'slipadd') {
+      document.getElementById('slipFile').click();
+    } else if (a === 'slipview') {
+      viewSlip(S.sel, b.dataset.id);
+    } else if (a === 'slipdel') {
+      if (confirm('ลบสลิปใบนี้? (ไฟล์จะถูกย้ายไปถังขยะใน Google Drive)')) act('adminDeleteSlip', { key: S.sel, slipId: b.dataset.id }, 'ลบสลิปแล้ว');
     } else if (a === 'extend') {
       act('adminExtend', { key: S.sel, days: 30 }, 'ต่ออายุ +30 วันแล้ว');
     } else if (a === 'revoke') {
@@ -389,7 +492,11 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
       .then(function (r) {
         out.className = 'msg ok'; out.hidden = false;
         out.innerHTML = 'สร้างแล้ว: <b class="key">' + esc(r.key) + '</b> — ส่งคีย์นี้ให้ลูกค้า';
-        $('fc').value = ''; $('fct').value = ''; $('fpay').value = ''; $('fnote').value = ''; S.sel = r.key; S.editing = null; return load(true);
+        var slipFiles = $('fslip').files;
+        $('fc').value = ''; $('fct').value = ''; $('fpay').value = ''; $('fnote').value = ''; S.sel = r.key; S.editing = null;
+        return load(true).then(function () {
+          if (slipFiles && slipFiles.length) { var fl = Array.prototype.slice.call(slipFiles); $('fslip').value = ''; return uploadSlips(r.key, fl); }
+        });
       })
       .catch(function (e) { out.className = 'msg bad'; out.hidden = false; out.textContent = e.message; })
       .then(function () { btn.disabled = false; });
