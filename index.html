@@ -64,7 +64,7 @@ tr.row{cursor:pointer}
 tr.row:hover td{background:var(--surface2)}
 tr.row[aria-selected=true] td{background:var(--accent-soft)}
 .key{font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.02em}
-td.no,th.no{width:44px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;padding-right:6px}
+td.no,th.no{width:58px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;padding-right:6px}
 td.no{font:600 12px var(--mono)}
 .cust{font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
@@ -176,7 +176,7 @@ td.no{font:600 12px var(--mono)}
           <input class="search" id="q" placeholder="ค้นหาคีย์ / ชื่อลูกค้า" aria-label="ค้นหา">
         </header>
         <div class="tw"><table>
-          <thead><tr><th class="no">#</th><th>คีย์</th><th>ลูกค้า</th><th>สถานะ</th><th>เครื่อง</th><th>หมดอายุ</th></tr></thead>
+          <thead><tr><th class="no">ลำดับ</th><th>คีย์</th><th>ลูกค้า</th><th>สถานะ</th><th>เครื่อง</th><th>หมดอายุ</th></tr></thead>
           <tbody id="rows"></tbody>
         </table></div>
       </section>
