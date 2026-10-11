@@ -332,14 +332,22 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 
   /* ---------- เรียก License Server ---------- */
   // Content-Type: text/plain = simple request (ไม่มี preflight) · Code.gs อ่าน body เป็น JSON เองอยู่แล้ว
+  // อ่านข้อมูล (adminList/adminGetSlip) ลองซ้ำอัตโนมัติสูงสุด 3 ครั้งเมื่อ Google ตอบหน้า error ชั่วคราว/ช้า/หลุด — คำสั่งที่เปลี่ยนข้อมูล (สร้าง/ต่ออายุ/ระงับ) ไม่ลองซ้ำเอง กันทำซ้ำ
+  var READ_ACTIONS = { adminList: 1, adminGetSlip: 1 };
   function api(action, data) {
+    var tries = READ_ACTIONS[action] ? 3 : 1;
+    function go(n) { return apiOnce(action, data).catch(function (e) { if (!e.transient || n >= tries) throw e; return new Promise(function (r) { setTimeout(r, 1200 * n); }).then(function () { return go(n + 1); }); }); }
+    return go(1);
+  }
+  function transient(msg) { var e = new Error(msg); e.transient = true; return e; }
+  function apiOnce(action, data) {
     var body = Object.assign({ action: action, adminToken: S.token }, data || {});
     // เพดานเวลา 30 วินาที (Apps Script ช้าสุดที่เจอ ~7 วินาที) — เกินแล้วแจ้งข้อผิดพลาดแทนการรอไม่จบ
     var ctl = typeof AbortController === 'function' ? new AbortController() : null, to = ctl && setTimeout(function () { ctl.abort(); }, 30000);
     return fetch(S.url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined })
-      .then(function (r) { clearTimeout(to); return r.text(); }, function (e) { clearTimeout(to); throw new Error(e && e.name === 'AbortError' ? 'เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); })
+      .then(function (r) { clearTimeout(to); return r.text(); }, function (e) { clearTimeout(to); throw transient(e && e.name === 'AbortError' ? 'เซิร์ฟเวอร์ตอบช้าเกินไป กรุณาลองใหม่' : 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ ตรวจอินเทอร์เน็ตแล้วลองใหม่'); })
       .then(function (t) {
-        var j; try { j = JSON.parse(t); } catch (e) { throw new Error('เซิร์ฟเวอร์ไม่ตอบเป็น JSON — ตรวจ URL และว่า Deploy เป็น Web app / Anyone แล้ว'); }
+        var j; try { j = JSON.parse(t); } catch (e) { throw transient('Google Apps Script ตอบไม่ถูกต้องชั่วคราว (หน้า error แทน JSON) — ลองใหม่อีกครั้ง · ถ้าเกิดซ้ำหลายครั้งจึงตรวจ URL และว่า Deploy เป็น Web app / Anyone'); }
         if (!j.success) throw new Error(j.error || 'เกิดข้อผิดพลาด');
         return j;
       });
@@ -372,6 +380,15 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" role="img" aria-label="รายรับ 6 เดือนล่าสุด: ' + months.map(function (m) { return m.label + ' ' + fmtMoney(m.sum); }).join(', ') + '"><path class="ar" d="' + dd + ' L' + l[0] + ' ' + h + ' L' + pts[0][0] + ' ' + h + 'Z"/><path class="ln" d="' + dd + '"/><circle cx="' + l[0].toFixed(1) + '" cy="' + l[1].toFixed(1) + '" r="4"/></svg>';
   }
   function fmtDate(iso) { if (!iso) return 'ไม่หมดอายุ'; var d = new Date(iso); return d.getDate() + ' ' + TH_M[d.getMonth()] + ' ' + (d.getFullYear() + 543); }
+  // เวลาที่เหลือแบบละเอียด ตรงกับที่โปรแกรม DogFlow แสดง — ตัวเลขที่มี data-exp จะถูกวาดใหม่ทุก 1 นาที (ไม่ต้องรีเฟรช)
+  function leftTxtMs(ms) {
+    if (!(ms > 0)) return 'หมดอายุแล้ว';
+    var tm = Math.floor(ms / 60000), d = Math.floor(tm / 1440), h = Math.floor((tm % 1440) / 60), m = tm % 60;
+    return 'เหลือ ' + (d >= 1 ? d + ' วัน ' + h + ' ชม.' : h >= 1 ? h + ' ชม. ' + m + ' นาที' : Math.max(m, 1) + ' นาที');
+  }
+  function leftTxt(iso) { return leftTxtMs(new Date(iso) - Date.now()); }
+  function leftHtml(iso) { return iso ? '<span class="lf" data-exp="' + esc(iso) + '">' + leftTxt(iso) + '</span>' : ''; }
+  setInterval(function () { var n = document.querySelectorAll('[data-exp]'); for (var i = 0; i < n.length; i++) n[i].textContent = leftTxt(n[i].getAttribute('data-exp')); }, 60000);
   function ago(iso) {
     if (!iso) return 'ไม่ทราบ';
     var m = Math.floor((Date.now() - new Date(iso)) / 60000);
@@ -384,8 +401,8 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   function enrich(l) {
     var stale = (S.data.staleDays || 3) * 86400000, now = Date.now();
     var live = l.sessions.filter(function (s) { return s.lastSeen && now - new Date(s.lastSeen) <= stale; });
-    var days = l.expiryDate ? Math.ceil((new Date(l.expiryDate) - now) / 86400000) : null;
-    var st = l.status !== 'active' ? 'off' : (days !== null && days < 0) ? 'bad' : (days !== null && days <= 7) ? 'soon' : 'ok';
+    var days = l.expiryDate ? (new Date(l.expiryDate) - now) / 86400000 : null; // วันที่เหลือแบบทศนิยม — เดิมปัดขึ้น (ceil) ทำให้ 29.4 วันยังขึ้น 30 ทั้งวัน
+    var st = l.status !== 'active' ? 'off' : (days !== null && days <= 0) ? 'bad' : (days !== null && days <= 7) ? 'soon' : 'ok';
     var paid = (l.payments || []).reduce(function (a, p) { return a + Number(p.amount || 0); }, 0);
     return { l: l, live: live, days: days, st: st, paid: Math.round(paid * 100) / 100 };
   }
@@ -419,7 +436,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     $('listCount').textContent = list.length === all.length ? all.length + ' คีย์' : 'แสดง ' + list.length + ' จาก ' + all.length + ' คีย์';
     $('rows').innerHTML = list.length ? list.map(function (e) {
       var full = e.live.length >= e.l.maxSessions;
-      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + '</td><td class="amt' + (e.paid ? '' : ' zero') + '">' + (e.paid ? fmtMoney(e.paid) : '–') + '</td></tr>';
+      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + (e.l.expiryDate ? '<div style="font-size:11px;opacity:.75">' + leftHtml(e.l.expiryDate) + '</div>' : '') + '</td><td class="amt' + (e.paid ? '' : ' zero') + '">' + (e.paid ? fmtMoney(e.paid) : '–') + '</td></tr>';
     }).join('') : '<tr><td colspan="7" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
 
     renderDetail(all);
@@ -470,7 +487,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     var l = e.l;
     box.innerHTML = '<div class="det"><div><div class="sub">คีย์ที่เลือก · ลำดับที่ ' + e.no + ' จาก ' + all.length + '</div><div class="kk"><span>' + esc(l.key) + '</span><button class="btn" data-act="copy" style="padding:4px 9px;font-size:12px">คัดลอก</button></div></div>'
       + (S.editing === l.key ? editForm(l) : '')
-      + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (e.days !== null && e.days >= 0 && e.days <= 7 ? ' · อีก ' + e.days + ' วัน' : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
+      + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (l.expiryDate ? ' · ' + leftHtml(l.expiryDate) : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
       + paysHtml(l)
       + slipsHtml(l)
       + logHtml(l)
@@ -590,18 +607,18 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   function afterAction(msg) { return load(true).then(function () { toast(msg); }); }
   function dlgExtend(key) {
     var l = licOf(key); if (!l || !l.expiryDate) return;
-    var exp = new Date(l.expiryDate), left = Math.ceil((exp - Date.now()) / 86400000);
+    var exp = new Date(l.expiryDate), leftMs = exp - Date.now();
     return openDialog({
       title: 'ต่ออายุ License', icon: 'clock', sub: key,
-      rows: [['ลูกค้า', l.customerName], ['หมดอายุปัจจุบัน', fmtDate(l.expiryDate) + (left >= 0 ? ' · อีก ' + left + ' วัน' : ' · หมดอายุแล้ว')]],
+      rows: [['ลูกค้า', l.customerName], ['หมดอายุปัจจุบัน', fmtDate(l.expiryDate) + (leftMs > 0 ? ' · ' + leftTxtMs(leftMs).replace('เหลือ', 'อีก') : ' · หมดอายุแล้ว')]],
       fields: [
         { id: 'days', type: 'number', label: 'ต่ออายุกี่วัน', value: 30, min: 1, max: 3650, required: true, chips: [7, 30, 90, 180, 365] },
         { id: 'amount', type: 'text', label: 'ยอดที่ได้รับ (บาท)', placeholder: 'เว้นว่าง = ต่ออายุฟรี', hint: 'ถ้าใส่ยอด ระบบบันทึกเป็นรายรับให้อัตโนมัติ', inputmode: 'decimal', check: amountOk },
         { id: 'note', type: 'text', label: 'หมายเหตุรายรับ', placeholder: 'เช่น โอนผ่านพร้อมเพย์', maxlength: 60, showIf: function (v) { return !!v.amount; } }
       ],
       preview: function (v) {
-        var base = Math.max(Date.now(), exp.getTime()), nx = new Date(base + Number(v.days) * 86400000), d2 = Math.ceil((nx - Date.now()) / 86400000);
-        return 'วันหมดอายุใหม่: <b>' + esc(fmtDate(nx.toISOString())) + '</b> (อีก ' + d2 + ' วัน)' + (left < 0 ? ' · นับจากวันนี้ เพราะคีย์หมดอายุแล้ว' : '');
+        var base = Math.max(Date.now(), exp.getTime()), nx = new Date(base + Number(v.days) * 86400000), d2 = leftTxtMs(nx - Date.now()).replace('เหลือ', 'อีก');
+        return 'วันหมดอายุใหม่: <b>' + esc(fmtDate(nx.toISOString())) + '</b> (' + d2 + ')' + (leftMs <= 0 ? ' · นับจากวันนี้ เพราะคีย์หมดอายุแล้ว' : '');
       },
       confirmText: function (v) { var a = String(v.amount || '').replace(/[,\s฿]/g, ''); return 'ต่ออายุ +' + (v.days || '…') + ' วัน' + (a && !amountOk(v.amount) ? ' · บันทึก ' + fmtMoney(Number(a)) : ' (ฟรี)'); },
       submit: function (v) { return api('adminExtend', { key: key, days: Number(v.days), amount: v.amount, note: v.note }).then(function () { return afterAction('ต่ออายุ +' + v.days + ' วันแล้ว' + (v.amount ? ' และบันทึกรายรับ' : '')); }); }
