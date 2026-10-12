@@ -58,8 +58,10 @@ h1,h2{margin:0;font-weight:700}
 .chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);font:600 12px var(--font);padding:5px 11px;border-radius:999px;cursor:pointer}
 .chip[aria-pressed=true]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
 .search{flex:1;min-width:140px;max-width:260px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font:13px var(--font);padding:7px 11px;border-radius:9px}
-.tw{overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:640px}
+/* [2026-10-12, user — "คีย์ทั้งหมด ไม่อยากให้มี Scroll bar"] เดิมตารางบังคับกว้าง ≥640px + ห่อด้วย overflow-x:auto → การ์ดรายการกว้างแค่ ~716px (คอลัมน์ซ้าย 1.6fr) เนื้อหาจริงกว้างกว่า จึงมีแถบเลื่อนข้างเสมอ
+   → ไม่มีแถบเลื่อนเลย: เมื่อการ์ดแคบกว่า 900px (ทุกขนาดจอ: 2 คอลัมน์ ~716px · 1 คอลัมน์ ≤ ~870px · มือถือ) แถวกลายเป็นการ์ด 3 บรรทัด (คีย์+สถานะ / ลูกค้า+เครื่อง / หมดอายุ+ยอด) · กว้าง ≥900 (ยังไม่เกิดจริง เพราะกรอบหลักกว้างสุด 1180px) ใช้ตารางเต็ม */
+.tw{overflow:visible;container-type:inline-size}
+table{width:100%;border-collapse:collapse}
 th{text-align:left;font-size:11.5px;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:9px 11px;white-space:nowrap}
 td{padding:11px 11px;border-top:1px solid var(--line);vertical-align:middle;white-space:nowrap}
 tr.row{cursor:pointer}
@@ -77,6 +79,24 @@ td.no{font:600 12px var(--mono)}
 .seats .bar{width:44px;height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
 .seats .bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
 .seats.full .bar i{background:var(--bad)}
+@container (max-width:899px){
+  table,thead,tbody{display:block}
+  thead{display:none}
+  tr.row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"no key st" ". cust seats" ". exp amt";gap:4px 10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+  tr.row td{display:block;border:0;padding:0;white-space:normal;background:transparent}
+  tr.row:hover{background:var(--surface2)}
+  tr.row[aria-selected=true]{background:var(--accent-soft)}
+  tr.row:hover td,tr.row[aria-selected=true] td{background:transparent}
+  tr.row td.no{grid-area:no;align-self:start;text-align:left;padding:2px 0 0}
+  tr.row td.key{grid-area:key;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  tr.row td:nth-child(4){grid-area:st;justify-self:end}
+  tr.row td.cust{grid-area:cust;max-width:none}
+  tr.row td:nth-child(5){grid-area:seats;justify-self:end}
+  tr.row td:nth-child(6){grid-area:exp;font-size:12.5px}
+  tr.row td:nth-child(6) div{display:inline;margin-left:8px}
+  tr.row td.amt{grid-area:amt;justify-self:end}
+  tr:not(.row) td.empty{display:block;padding:18px 14px;border-top:1px solid var(--line)}
+}
 .side{display:flex;flex-direction:column;gap:16px;min-width:0}
 .det{padding:16px;display:flex;flex-direction:column;gap:14px}
 .det .kk{font-family:var(--mono);font-weight:600;font-size:16px;letter-spacing:.03em;word-break:break-all;display:flex;gap:8px;align-items:center}
