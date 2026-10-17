@@ -441,9 +441,10 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     $('kDev').textContent = devs; $('kDevN').textContent = active ? 'เฉลี่ย ' + (devs / active).toFixed(1) + ' เครื่องต่อคีย์' : '';
     $('kSoon').textContent = soon;
     $('kVio').textContent = vio.length; $('kVioN').textContent = 'ใน 30 วันล่าสุด';
-    var rv = revenueSummary(S.data.licenses);
+    var delPays = (S.data.deletedPays || []).map(function (d) { return { payments: d.payments }; });   // [2026-10-17] รายรับของคีย์ที่ลบแล้วยังนับในยอดรวม
+    var rv = revenueSummary(S.data.licenses.concat(delPays));
     $('kRev').textContent = fmtMoney(rv.total);
-    $('kRevN').textContent = rv.total ? 'เดือนนี้ ' + fmtMoney(rv.month) + ' · จาก ' + rv.paying + ' คีย์ที่ชำระแล้ว' : 'ยังไม่มีการบันทึกรายรับ — เพิ่มได้ที่รายละเอียดคีย์';
+    $('kRevN').textContent = rv.total ? 'เดือนนี้ ' + fmtMoney(rv.month) + ' · จาก ' + rv.paying + ' คีย์ที่ชำระแล้ว' + (delPays.length ? ' (รวมคีย์ที่ลบแล้ว ' + delPays.length + ' คีย์)' : '') : 'ยังไม่มีการบันทึกรายรับ — เพิ่มได้ที่รายละเอียดคีย์';
     $('kRevSpark').innerHTML = rv.total ? sparkSvg(rv.months) : '';
 
     var list = all.filter(function (e) {
@@ -522,6 +523,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
           ? '<button class="btn danger" data-act="revoke"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>ระงับคีย์</button>'
           : '<button class="btn" data-act="restore"><svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>เปิดใช้คีย์อีกครั้ง</button>')
       + '<button class="btn" data-act="edit"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>แก้ข้อมูลลูกค้า</button>'
+      + '<button class="btn danger" data-act="delkey"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>ลบคีย์</button>'
       + '</div></div>';
   }
 
@@ -553,7 +555,8 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     clock: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
     ban: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>',
     check: '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>',
-    exit: '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>'
+    exit: '<svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/></svg>',
+    trash: '<svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>'
   };
   // cfg: { title, icon, sub, body, rows:[[k,v]], fields:[{id,type,label,hint,value,chips,min,max,required,options,placeholder,check(v,all),showIf(all)}],
   //        preview(vals)->html, confirmText(vals), danger, submit(vals)->Promise } · คืน Promise<boolean> (true = ทำสำเร็จ, false = ยกเลิก)
@@ -670,6 +673,27 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       fields: [{ id: 'detail', type: 'text', label: 'หมายเหตุ (ไม่บังคับ)', placeholder: 'เช่น ลูกค้าชำระเงินแล้ว', maxlength: 120 }],
       confirmText: function () { return 'เปิดใช้คีย์'; },
       submit: function (v) { return api('adminSetStatus', { key: key, status: 'active', detail: v.detail }).then(function () { return afterAction('เปิดใช้คีย์อีกครั้งแล้ว'); }); }
+    });
+  }
+  // [2026-10-17] ลบคีย์ถาวรออกจากรายการ: ต้องเลือกเหตุผล + พิมพ์คีย์ยืนยัน + ติ๊กรับทราบ · ฝั่งเซิร์ฟเวอร์เก็บสำเนา (รายรับ/สลิป/ประวัติ) ไว้ในชีต DeletedLicenses
+  function dlgDeleteKey(key) {
+    var l = licOf(key); if (!l) return;
+    var pays = (l.payments || []).reduce(function (n, p) { return n + (Number(p.amount) || 0); }, 0);
+    return openDialog({
+      title: 'ลบคีย์นี้ออกจากรายการ?', icon: 'trash', sub: key, danger: true,
+      body: 'คีย์จะหายจากรายการและลูกค้าใช้งานไม่ได้ทันที (แอปจะแจ้งว่าไม่พบคีย์) เครื่องที่ผูกอยู่จะถูกลบด้วย — ระบบเก็บสำเนาข้อมูลคีย์ รายรับ และสลิปไว้ในชีต DeletedLicenses ของ Google Sheet (ยอดรายรับรวมไม่ลดลง) · ถ้าแค่ไม่ต้องการให้ใช้ชั่วคราว แนะนำใช้ "ระงับคีย์" ซึ่งเปิดคืนได้',
+      rows: [['ลูกค้า', l.customerName], ['เครื่องที่ผูกอยู่', (l.sessions || []).length + ' เครื่อง (ออนไลน์ ' + liveCount(l) + ')'], ['สถานะ', l.status === 'active' ? 'เปิดใช้งานอยู่' : 'ระงับอยู่'], ['รายรับของคีย์นี้', pays ? fmtMoney(pays) : '-'], ['หมดอายุ', l.expiryDate ? fmtDate(l.expiryDate) : 'ไม่หมดอายุ']],
+      fields: [
+        { id: 'reason', type: 'select', label: 'เหตุผลที่ลบ', required: true, options: [['', '— เลือกเหตุผล —'], ['ออกคีย์ผิด/ซ้ำ', 'ออกคีย์ผิด/ซ้ำ'], ['คีย์ทดสอบ', 'คีย์ทดสอบ'], ['ลูกค้ายกเลิกถาวร', 'ลูกค้ายกเลิกถาวร'], ['ล้างรายการเก่า', 'ล้างรายการเก่า'], ['อื่นๆ', 'อื่นๆ']] },
+        { id: 'detail', type: 'text', label: 'รายละเอียดเพิ่มเติม', placeholder: 'เช่น ออกให้ผิดคน', maxlength: 40, hint: 'เลือก "อื่นๆ" ต้องกรอกรายละเอียด' },
+        { id: 'confirmKey', type: 'text', label: 'พิมพ์คีย์เพื่อยืนยัน', placeholder: key, required: true, maxlength: 24, hint: 'พิมพ์คีย์ให้ตรง: ' + key, check: function (v) { return String(v).toUpperCase().trim() === key ? '' : 'คีย์ยังไม่ตรง'; } },
+        { id: 'ack', type: 'checkbox', label: 'ฉันเข้าใจว่าคีย์นี้จะหายจากรายการและลูกค้าใช้งานไม่ได้ทันที', required: true }
+      ],
+      confirmText: function () { return 'ลบคีย์นี้'; },
+      submit: function (v) {
+        if (v.reason === 'อื่นๆ' && !v.detail) throw new Error('เลือก "อื่นๆ" กรุณากรอกรายละเอียด');
+        return api('adminDeleteKey', { key: key, confirmKey: v.confirmKey, reason: v.reason + (v.detail ? ': ' + v.detail : '') }).then(function () { S.sel = null; S.editing = null; return afterAction('ลบคีย์แล้ว (เก็บสำเนาไว้ในชีต DeletedLicenses)'); });
+      }
     });
   }
   function dlgLogout() {
@@ -804,6 +828,8 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       dlgRevoke(S.sel);
     } else if (a === 'restore') {
       dlgRestore(S.sel);
+    } else if (a === 'delkey') {
+      dlgDeleteKey(S.sel);
     }
   });
   document.addEventListener('keydown', function (ev) {
