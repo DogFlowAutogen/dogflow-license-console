@@ -116,6 +116,32 @@ td.no{font:600 12px var(--mono)}
 .vio li:first-child{border-top:0}
 .vio .tag{font-size:11px;font-weight:700;color:var(--bad);background:var(--bad-soft);padding:2px 8px;border-radius:6px;flex:none;margin-top:2px}
 .vio .m{font-size:12.5px;min-width:0;overflow-wrap:anywhere}.vio .m small{display:block;color:var(--muted);font-size:11.5px}
+/* [2026-10-29, ผู้ใช้สั่ง] การละเมิดล่าสุด: คลิกดูรายละเอียดได้ */
+.vio li.vi{cursor:pointer;border-radius:8px;margin-inline:-8px;padding-inline:8px}
+.vio li.vi:hover{background:var(--surface2)}
+.vio li.vi:focus-visible{outline:0;background:var(--surface2);box-shadow:0 0 0 2px var(--accent)}
+.vio .chev{margin-left:auto;color:var(--muted);font-size:18px;line-height:1.2;flex:none;align-self:center}
+.vio li.more{justify-content:center}.vio li.more .btn{font-size:12px;padding:6px 12px}
+.vio.all{max-height:440px;overflow:auto}
+#vioModal{position:fixed;inset:0;background:rgba(10,8,5,.62);display:grid;place-items:center;z-index:25;padding:16px}
+#vioModal .box{width:100%;max-width:680px;max-height:100%;background:var(--surface);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 30px 60px -24px rgba(0,0,0,.65)}
+#vioModal .bar{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--line)}
+#vioModal .bar .tag{font-size:11px;font-weight:700;color:var(--bad);background:var(--bad-soft);padding:2px 8px;border-radius:6px;flex:none}
+#vioModal .bar b{flex:1;font-size:15px;min-width:0;overflow-wrap:anywhere}
+#vioModal .body{overflow:auto;padding:14px 16px;display:grid;gap:15px}
+#vioModal h3{font-size:13px;margin:0 0 6px}
+#vioModal .note{font-size:12.5px;background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:9px 12px}
+#vioModal .vd-dl{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;font-size:12.5px;margin:0;padding:11px 13px;background:var(--surface2);border-radius:12px}
+#vioModal .vd-dl dt{color:var(--muted)}#vioModal .vd-dl dd{margin:0;overflow-wrap:anywhere}
+#vioModal .mono{font-family:var(--mono);font-size:12px}
+#vioModal .vd-none{font-size:12.5px;color:var(--muted)}
+#vioModal .vd-tl{list-style:none;margin:0;padding:0;font-size:12.5px}
+#vioModal .vd-tl li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line)}
+#vioModal .vd-tl li:first-child{border-top:0}
+#vioModal .vd-tl li.cur{font-weight:600}
+#vioModal .vd-tl .t{font-size:11px;font-weight:700;color:var(--bad);flex:none}
+#vioModal .vd-tl small{color:var(--muted);margin-left:auto;flex:none;text-align:right}
+#vioModal .foot{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid var(--line)}
 .empty{padding:22px 16px;text-align:center;color:var(--muted)}
 .form{padding:16px;display:grid;gap:11px}
 .form label,.login label{display:grid;gap:4px;font-size:12.5px;color:var(--muted);font-weight:500}
@@ -326,6 +352,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 </div>
 <input type="file" id="slipFile" accept="image/jpeg,image/png,image/webp,image/*" multiple hidden>
 <div id="slipModal" hidden role="dialog" aria-modal="true" aria-label="สลิปโอนเงิน"><div class="box"><div class="bar"><b id="slipTitle">สลิป</b><button class="btn" id="slipClose">ปิด</button></div><div class="body"><img id="slipImg" alt="สลิปโอนเงิน"></div></div></div>
+<div id="vioModal" hidden role="dialog" aria-modal="true" aria-labelledby="vioTitle"><div class="box"><div class="bar"><span class="tag" id="vioTag"></span><b id="vioTitle"></b><button class="btn" type="button" data-vact="close">ปิด</button></div><div class="body" id="vioBody"></div><div class="foot" id="vioFoot"></div></div></div>
 <div class="dlg" id="dlg" hidden role="dialog" aria-modal="true" aria-labelledby="dlgTitle"><form class="dlg-card" id="dlgForm" novalidate>
   <div class="dlg-hd"><span class="dlg-ic" id="dlgIc" aria-hidden="true"></span><div style="min-width:0"><div class="dlg-t" id="dlgTitle"></div><div class="dlg-s" id="dlgSub"></div></div></div>
   <p class="dlg-body" id="dlgBody" hidden></p>
@@ -461,9 +488,13 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     }).join('') : '<tr><td colspan="7" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
 
     renderDetail(all);
-    $('vio').innerHTML = S.data.violations.length ? S.data.violations.slice(0, 8).map(function (v) {
-      return '<li><span class="tag">' + esc(v.type || 'VIOLATION') + '</span><div class="m">' + esc(v.licenseKey || 'ไม่มีคีย์') + '<small>เครื่อง ' + esc((v.deviceId || '').slice(0, 8)) + '… · ' + esc(ago(v.time)) + '</small></div></li>';
-    }).join('') : '<li class="empty" style="display:block;padding:14px 0">ไม่มีการละเมิด</li>';
+    // [2026-10-29, ผู้ใช้สั่ง] คลิกแต่ละรายการ = ดูรายละเอียด (showVio) · แสดง 8 รายการล่าสุด กด "ดูทั้งหมด" เพื่อดูทั้งที่โหลดมา (สูงสุด 50)
+    var vlist = S.data.violations, vshow = S.vioAll ? vlist : vlist.slice(0, 8);
+    $('vio').className = 'vio' + (S.vioAll ? ' all' : '');
+    $('vio').innerHTML = vlist.length ? vshow.map(function (v, i) {
+      var vl = licOf(v.licenseKey);
+      return '<li class="vi" data-vi="' + i + '" tabindex="0" role="button" aria-label="ดูรายละเอียดการละเมิด ' + esc(v.type || '') + '"><span class="tag">' + esc(v.type || 'VIOLATION') + '</span><div class="m">' + esc(v.licenseKey || 'ไม่มีคีย์') + '<small>' + (vl && vl.customerName ? esc(vl.customerName) + ' · ' : '') + 'เครื่อง ' + esc((v.deviceId || '').slice(0, 8)) + '… · ' + esc(ago(v.time)) + '</small></div><span class="chev" aria-hidden="true">›</span></li>';
+    }).join('') + (vlist.length > 8 ? '<li class="more"><button type="button" class="btn" data-vmore="1">' + (S.vioAll ? 'แสดงเฉพาะ 8 รายการล่าสุด' : 'ดูทั้งหมด ' + vlist.length + ' รายการ') + '</button></li>' : '') : '<li class="empty" style="display:block;padding:14px 0">ไม่มีการละเมิด</li>';
   }
 
   // ช่องทางติดต่อ: ถ้าเป็นลิงก์ https:// ให้กดได้ (เปิดแท็บใหม่) ไม่งั้นแสดงเป็นข้อความ
@@ -526,6 +557,69 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       + '<button class="btn danger" data-act="delkey"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>ลบคีย์</button>'
       + '</div></div>';
   }
+
+  /* ---------- [2026-10-29, ผู้ใช้สั่ง] รายละเอียดการละเมิด (คลิกจาก "การละเมิดล่าสุด") ----------
+   * ใช้ข้อมูลที่ชีตมีอยู่แล้ว (Violations + Sessions + Licenses) ไม่ต้องแก้เซิร์ฟเวอร์ · ตำแหน่ง/IP ยังไม่ถูกเก็บ (ขั้นถัดไป)
+   * คำอธิบายชนิดเหตุการณ์เป็น "ข้อสันนิษฐานจากโค้ด" ไม่ใช่หลักฐานเด็ดขาด — เหตุการณ์เดียวอาจเกิดจากลูกค้าเปลี่ยนเครื่อง/ติดตั้งใหม่ได้ */
+  var VIO_INFO = {
+    DEVICE_CLONE: { th: 'ไฟล์ License ถูกคัดลอกไปเครื่องอื่น', note: 'รหัสเครื่องเดิม แต่ลายนิ้วมือเครื่องไม่ตรงกับที่ลงทะเบียนไว้ — มักเกิดจากคัดลอกโปรแกรม/ไฟล์ไปเครื่องอื่น แต่ก็เกิดได้จากเปลี่ยนฮาร์ดแวร์หรือติดตั้งระบบใหม่ ระบบปฏิเสธการใช้งานจากเครื่องที่ไม่ตรงไปแล้ว' },
+    TRIAL_REUSE: { th: 'เครื่องเดิมขอทดลองฟรีซ้ำ', note: 'เครื่องนี้เคยเริ่มทดลองกับคีย์อื่นแล้ว จึงเริ่มทดลองกับคีย์นี้ไม่ได้ — ดู "คีย์ทดลองครั้งแรก" เพื่อโยงกับคีย์เดิม' },
+    TAMPERING: { th: 'ตรวจพบการแทรกแซงโค้ดของโปรแกรม', note: 'รายงานจากเครื่องลูกค้า: พบร่องรอยการแก้/ดักจับการทำงานของโปรแกรม (เช่น เปลี่ยนฟังก์ชัน fetch) — ควรตรวจซ้ำก่อนสรุป เพราะส่วนขยายหรือโปรแกรมแอนตี้ไวรัสบางตัวอาจทำให้เกิดได้' },
+    RESPONSE_ORIGIN: { th: 'คำตอบ License ไม่ได้มาจากเซิร์ฟเวอร์จริง', note: 'โปรแกรมได้รับคำตอบจากโฮสต์อื่นที่ไม่ใช่เซิร์ฟเวอร์ License — อาจมีพร็อกซี/เซิร์ฟเวอร์ปลอมคั่น หรือเครือข่ายองค์กรดักการเชื่อมต่อ' }
+  };
+  var VIO_FIELD = { action: 'ขณะที่', registered: 'ลายนิ้วมือที่ลงทะเบียน (8 ตัวแรก)', seen: 'ลายนิ้วมือที่เห็นตอนนี้ (8 ตัวแรก)', fp: 'ลายนิ้วมือเครื่อง (8 ตัวแรก)', firstKey: 'คีย์ทดลองครั้งแรก (4 ตัวแรก)' };
+  var VIO_ACTION = { activate: 'เปิดใช้งาน (activate)', checkSession: 'เช็คสถานะ (checkSession)', heartbeat: 'ส่งสัญญาณ (heartbeat)' };
+  function fmtDT(iso) { var d = new Date(iso); return !iso || isNaN(d) ? 'ไม่ทราบ' : d.toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  function copyText(t, msg) { var done = function () { toast(msg); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { toast(t); }); else toast(t); }
+  function vioSig(v) { return v.time + '|' + v.type + '|' + v.deviceId; }
+  function vioDetailRows(raw) {
+    var none = '<div class="vd-none">ไม่มีรายละเอียดเพิ่มเติม</div>', obj = null;
+    if (!raw) return none;
+    try { obj = JSON.parse(raw); } catch (e) { obj = null; }
+    if (Array.isArray(obj)) return obj.length ? '<dl class="vd-dl"><dt>รายการที่ตรวจพบ</dt><dd class="mono">' + esc(obj.join(', ')) + '</dd></dl>' : none;
+    if (!obj || typeof obj !== 'object') return '<dl class="vd-dl"><dt>ข้อความ</dt><dd class="mono">' + esc(raw) + '</dd></dl>';
+    var keys = Object.keys(obj); if (!keys.length) return none;
+    return '<dl class="vd-dl">' + keys.map(function (k) {
+      var val = obj[k]; if (val && typeof val === 'object') val = JSON.stringify(val);
+      if (k === 'action' && VIO_ACTION[val]) val = VIO_ACTION[val];
+      return '<dt>' + esc(VIO_FIELD[k] || k) + '</dt><dd class="mono">' + esc(val) + '</dd>';
+    }).join('') + '</dl>';
+  }
+  function showVio(v) {
+    var validKey = v.licenseKey && v.licenseKey !== 'none';
+    var l = validKey ? licOf(v.licenseKey) : null, e = l ? enrich(l) : null;
+    var info = VIO_INFO[v.type] || { th: 'เหตุการณ์ชนิดที่ระบบยังไม่รู้จัก', note: 'ดูข้อมูลดิบด้านล่างประกอบการตัดสินใจ' };
+    var dev = l ? (l.sessions || []).filter(function (s) { return s.deviceId === v.deviceId; })[0] : null;
+    var rel = S.data.violations.filter(function (x) { return x !== v && ((validKey && x.licenseKey === v.licenseKey) || (v.deviceId && x.deviceId === v.deviceId)); });
+    var since = Date.now() - 30 * 86400000, n30 = [v].concat(rel).filter(function (x) { return x.time && new Date(x.time) >= since; }).length;
+    var online = dev && e && e.live.some(function (x) { return x.deviceId === dev.deviceId; });
+    var keyHtml = l
+      ? '<dl class="vd-dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName || '-') + '</dd><dt>ช่องทางติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>ชนิดคีย์</dt><dd>' + (l.kind === 'trial' ? 'ทดลองใช้' + (l.trialDays ? ' ' + esc(l.trialDays) + ' วัน' : '') : 'ปกติ') + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + '</dd><dt>เครื่องที่ใช้อยู่</dt><dd>' + e.live.length + ' / ' + esc(l.maxSessions) + '</dd></dl>'
+      : '<div class="vd-none">' + (validKey ? 'ไม่พบคีย์นี้ในชีต Licenses (อาจถูกลบไปแล้ว)' : 'รายงานนี้ไม่มีคีย์ (โปรแกรมยังไม่ได้เปิดใช้งาน)') + '</div>';
+    var devHtml = dev
+      ? '<dl class="vd-dl"><dt>ชื่อเครื่อง</dt><dd>' + esc(dev.deviceName || '-') + '</dd><dt>รหัสเครื่อง</dt><dd class="mono">' + esc(dev.deviceId) + '</dd><dt>เปิดใช้งานครั้งแรก</dt><dd>' + esc(fmtDT(dev.activatedAt)) + '</dd><dt>ใช้ล่าสุด</dt><dd>' + esc(fmtDT(dev.lastSeen)) + ' · ' + esc(ago(dev.lastSeen)) + (online ? ' · ออนไลน์' : ' · ไม่ออนไลน์นาน') + '</dd></dl>'
+      : '<dl class="vd-dl"><dt>รหัสเครื่อง</dt><dd class="mono">' + esc(v.deviceId || '-') + '</dd></dl>' + (l ? '<div class="vd-none" style="margin-top:6px">ไม่พบเครื่องนี้ในรายการเครื่องของคีย์ (ถูกลบออกแล้ว หรือไม่เคยลงทะเบียน)</div>' : '');
+    var others = l ? (l.sessions || []).filter(function (s) { return s.deviceId !== v.deviceId; }) : [];
+    var othersHtml = others.length ? '<div class="vd-none" style="margin:8px 0 2px">เครื่องอื่นของคีย์นี้ (' + others.length + ')</div><ul class="vd-tl">' + others.map(function (s) { return '<li><span>' + esc(s.deviceName || '-') + '</span><small>ใช้ล่าสุด ' + esc(ago(s.lastSeen)) + '</small></li>'; }).join('') + '</ul>' : '';
+    var tl = [v].concat(rel.slice(0, 10)).map(function (x) { return '<li' + (x === v ? ' class="cur"' : '') + '><span class="t">' + esc(x.type || 'VIOLATION') + '</span><span>' + esc(fmtDT(x.time)) + '</span><small>เครื่อง ' + esc((x.deviceId || '').slice(0, 8)) + '…' + (x === v ? ' · รายการนี้' : '') + '</small></li>'; }).join('');
+    $('vioTag').textContent = v.type || 'VIOLATION'; $('vioTitle').textContent = info.th;
+    $('vioBody').innerHTML = '<div class="note">' + esc(info.note) + '<br><small style="color:var(--muted)">เหตุการณ์เดียวไม่ใช่หลักฐานเด็ดขาด — ดูประกอบกับประวัติและข้อมูลลูกค้าก่อนตัดสินใจระงับคีย์</small></div>'
+      + '<div><h3>เหตุการณ์</h3><dl class="vd-dl"><dt>ชนิด</dt><dd class="mono">' + esc(v.type || '-') + '</dd><dt>เวลา</dt><dd>' + esc(fmtDT(v.time)) + ' · ' + esc(ago(v.time)) + '</dd><dt>คีย์</dt><dd class="mono">' + esc(validKey ? v.licenseKey : 'ไม่มีคีย์') + '</dd><dt>การละเมิดของคีย์นี้ (30 วัน)</dt><dd>' + n30 + ' ครั้ง</dd><dt>ตำแหน่ง / IP</dt><dd style="color:var(--muted)">ยังไม่ได้เก็บข้อมูลนี้</dd></dl></div>'
+      + '<div><h3>รายละเอียดจากระบบ</h3>' + vioDetailRows(v.details) + '</div>'
+      + '<div><h3>ข้อมูลคีย์และที่มา</h3>' + keyHtml + '</div>'
+      + '<div><h3>เครื่องที่เกี่ยวข้อง</h3>' + devHtml + othersHtml + '</div>'
+      + '<div><h3>ประวัติที่เกี่ยวข้อง (จากรายการล่าสุดที่โหลดมา ' + S.data.violations.length + ' รายการ)</h3><ul class="vd-tl">' + tl + '</ul></div>';
+    $('vioFoot').innerHTML = (validKey ? '<button class="btn" type="button" data-vact="copykey">คัดลอกคีย์</button>' : '')
+      + (v.deviceId ? '<button class="btn" type="button" data-vact="copydev">คัดลอกรหัสเครื่อง</button>' : '')
+      + (l ? '<button class="btn" type="button" data-vact="gokey">ไปที่คีย์ในตาราง</button>' : '')
+      + (dev ? '<button class="btn danger" type="button" data-vact="rmdev">ลบเครื่องนี้</button>' : '')
+      + (l && l.status === 'active' ? '<button class="btn danger" type="button" data-vact="revoke">ระงับคีย์</button>' : '');
+    S.vioCur = v; if (!S.vioPrev) S.vioPrev = document.activeElement;
+    var m = $('vioModal'); m.hidden = false; $('vioBody').scrollTop = 0;
+    var cb = m.querySelector('[data-vact="close"]'); if (cb) cb.focus();
+  }
+  function closeVio() { $('vioModal').hidden = true; S.vioCur = null; var p = S.vioPrev; S.vioPrev = null; if (p && p.focus) { try { p.focus(); } catch (e) { } } }
+  function reopenVio(sig) { var f = S.data.violations.filter(function (x) { return vioSig(x) === sig; })[0]; if (f) showVio(f); else closeVio(); }
 
   /* ---------- โหลด/ทำงาน ---------- */
   function load(silent) {
@@ -792,9 +886,35 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   $('btnRefresh').addEventListener('click', function () { load(false); });
   $('q').addEventListener('input', function () { S.q = this.value.trim().toLowerCase(); render(); });
 
+  // [2026-10-29] หน้าต่างรายละเอียดการละเมิด: ปุ่มด้านล่าง · คลิกพื้นหลัง/Esc = ปิด · Enter/Space บนรายการ = เปิด
+  $('vioModal').addEventListener('click', function (ev) {
+    if (ev.target.id === 'vioModal') { closeVio(); return; }
+    var b = ev.target.closest('[data-vact]'), v = S.vioCur; if (!b || !v) return;
+    var a = b.dataset.vact, sig = vioSig(v);
+    if (a === 'close') closeVio();
+    else if (a === 'copykey') copyText(v.licenseKey, 'คัดลอกคีย์แล้ว');
+    else if (a === 'copydev') copyText(v.deviceId, 'คัดลอกรหัสเครื่องแล้ว');
+    else if (a === 'gokey') {
+      S.sel = v.licenseKey; S.editing = null; closeVio(); render();
+      var r = document.querySelector('tr.row[aria-selected="true"]'); if (r && r.scrollIntoView) r.scrollIntoView({ block: 'center' });
+    } else if (a === 'revoke') {
+      Promise.resolve(dlgRevoke(v.licenseKey)).then(function (ok) { if (ok) reopenVio(sig); });
+    } else if (a === 'rmdev') {
+      if (confirm('ลบเครื่องนี้ออกจากคีย์? เครื่องนั้นจะต้องเปิดใช้งานใหม่')) act('adminRemoveSession', { key: v.licenseKey, deviceId: v.deviceId }, 'ลบเครื่องแล้ว').then(function () { reopenVio(sig); });
+    }
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && !$('vioModal').hidden && $('dlg').hidden) { ev.preventDefault(); closeVio(); return; }
+    var li = ev.target && ev.target.closest ? ev.target.closest('#vio li.vi') : null;
+    if (li && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); var vv = S.data && S.data.violations[Number(li.dataset.vi)]; if (vv) showVio(vv); }
+  });
   document.addEventListener('click', function (ev) {
     var chip = ev.target.closest('#flt .chip');
     if (chip) { S.flt = chip.dataset.f; document.querySelectorAll('#flt .chip').forEach(function (c) { c.setAttribute('aria-pressed', c === chip); }); render(); return; }
+    var vmore = ev.target.closest('[data-vmore]');
+    if (vmore) { S.vioAll = !S.vioAll; render(); return; }
+    var vi = ev.target.closest('#vio li.vi');
+    if (vi) { var vv = S.data && S.data.violations[Number(vi.dataset.vi)]; if (vv) showVio(vv); return; }
     var row = ev.target.closest('tr.row');
     if (row) { if (S.sel !== row.dataset.k) S.editing = null; S.sel = row.dataset.k; render(); return; }
     var b = ev.target.closest('[data-act]'); if (!b || !S.sel) return;
