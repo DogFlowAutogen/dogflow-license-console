@@ -241,9 +241,14 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 .sp-son{position:absolute;width:132px;height:132px;border-radius:30px;border:1.5px solid var(--accent);opacity:0;animation:spSonar 2.4s ease-out infinite}
 .sp-son.s2{animation-delay:.8s}.sp-son.s3{animation-delay:1.6s}
 @keyframes spSonar{0%{transform:scale(1);opacity:.65}100%{transform:scale(1.65);opacity:0}}
-.sp-ring{position:absolute;width:200px;height:200px;z-index:1;animation:spSpin 1.7s linear infinite}
-.sp-ring circle{fill:none;stroke-width:3.5}.sp-ring .bg{stroke:var(--line);opacity:.8}.sp-ring .fg{stroke:var(--accent);stroke-linecap:round;stroke-dasharray:80 285}
-@keyframes spSpin{to{transform:rotate(360deg)}}
+/* [2026-10-29, ผู้ใช้สั่ง "ให้เหมือนหน้าโหลดของเว็บร้าน"] ตัวหมุนเปลี่ยนจากวงกลมเป็นกรอบสี่เหลี่ยมมุมมนวิ่งตามรูปโลโก้ (ดาวหางหางจาง) — คัดลอกจาก dogflow-store (style.css) ·
+   รางจางๆ + ลำแสงไล่สีหัวสว่างหางจางวิ่งตามขอบ · ทำงานบนเธรดคอมโพสิตเตอร์ (transform) ไม่ใช้ @property · มาสก์ที่ตัวกรอบนิ่งตัดเฉพาะแนวขอบ แผ่นไล่สีหมุนอยู่ข้างใน */
+.sp-ring{position:absolute;width:200px;height:200px;z-index:1;pointer-events:none}
+.sp-ring i{position:absolute;inset:12px;border-radius:52px;display:block}
+.sp-ring .sr-track{border:3.5px solid color-mix(in srgb,var(--accent) 16%,var(--line));opacity:.9}
+.sp-ring .sr-comet{padding:3.5px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.sp-ring .sr-comet b{position:absolute;left:50%;top:50%;width:260px;height:260px;margin:-130px 0 0 -130px;will-change:transform;background:conic-gradient(from 0deg,transparent 0deg,transparent 215deg,color-mix(in srgb,var(--accent) 12%,transparent) 250deg,color-mix(in srgb,var(--accent) 60%,transparent) 320deg,var(--accent) 360deg);animation:spComet 1.9s linear infinite}
+@keyframes spComet{to{transform:rotate(360deg)}}
 .sp-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.32em;color:var(--accent);text-transform:uppercase}
 .sp-title{font-size:26px;font-weight:700;margin-top:6px;text-align:center}
 .sp-chip{--sc:var(--accent);display:inline-flex;align-items:center;gap:9px;margin-top:10px;max-width:min(92vw,420px);padding:7px 16px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--fg)}
@@ -257,14 +262,14 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
 @media (max-height:680px){.sp-wrap{transform:scale(.72);margin:-34px 0 -30px}}
 @media (max-height:520px){.sp-wrap{transform:scale(.55);margin:-52px 0 -46px}}
 /* ลดการเคลื่อนไหว: ปิดเอฟเฟกต์ตกแต่ง (Sonar) แต่คงตัวบอกความคืบหน้า (วงแหวน จุด แถบ) เพราะเป็นข้อมูลว่ายังทำงานอยู่ */
-@media (prefers-reduced-motion:reduce){.sp-son{display:none}.sp-ring{animation-duration:2.4s}.sp-chip i{animation-duration:1.6s}}
+@media (prefers-reduced-motion:reduce){.sp-son{display:none}.sp-ring .sr-comet b{animation-duration:2.4s}.sp-chip i{animation-duration:1.6s}}
 </style>
 </head>
 <body>
 <!-- หน้าโหลด: แสดงตั้งแต่เฟรมแรก (ก่อน JS ทำงาน) ปิดเมื่อเข้าสู่ระบบอัตโนมัติเสร็จ/ไม่มีรหัสที่จำไว้ -->
 <div id="splash" role="status" aria-live="polite">
   <div class="sp-wrap"><span class="sp-son"></span><span class="sp-son s2"></span><span class="sp-son s3"></span>
-    <svg class="sp-ring" viewBox="0 0 132 132" aria-hidden="true"><circle class="bg" cx="66" cy="66" r="58"/><circle class="fg" cx="66" cy="66" r="58"/></svg>
+    <span class="sp-ring" aria-hidden="true"><i class="sr-track"></i><i class="sr-comet"><b></b></i></span>
     <svg class="sp-logo" viewBox="0 0 100 100" aria-label="DogFlow"><rect width="100" height="100" fill="#171109"/><g transform="translate(12,13.5) scale(0.76)"><g fill="#ff9e2c"><ellipse cx="24" cy="44" rx="8" ry="10.5" transform="rotate(-24 24 44)"/><ellipse cx="40" cy="26" rx="8.5" ry="11" transform="rotate(-8 40 26)"/><ellipse cx="60" cy="26" rx="8.5" ry="11" transform="rotate(8 60 26)"/><ellipse cx="76" cy="44" rx="8" ry="10.5" transform="rotate(24 76 44)"/><path d="M50 46 C 66 46, 80 60, 76 72 C 72 84, 60 82, 50 82 C 40 82, 28 84, 24 72 C 20 60, 34 46, 50 46 Z"/></g><path d="M44 58 L44 74 L60 66 Z" fill="#171109" stroke="#171109" stroke-width="3" stroke-linejoin="round"/></g></svg>
   </div>
   <div class="sp-eyebrow">DOGFLOW · LICENSE CONSOLE</div>
@@ -577,6 +582,12 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     return ds ? esc(fmtDT(ds)) + '<br><small style="color:var(--muted)">จากเครื่องแรกที่ยังอยู่ในรายการ (คีย์นี้ไม่มีบันทึกเปิดใช้ครั้งแรก)</small>' : '<span style="color:var(--muted)">ยังไม่เคยเปิดใช้</span>';
   }
   function metaVal(v) { return v ? esc(v) : '<span style="color:var(--muted)">ไม่มีข้อมูล</span>'; }
+  // [2026-10-29] ค่าของ "เหตุการณ์" ถ้ามีบันทึกไว้ใช้ค่านั้น · ไม่มี (เหตุการณ์เก่าก่อนเซิร์ฟเวอร์เก็บค่า) แต่เครื่องนั้นมีค่าปัจจุบัน → แสดงค่าปัจจุบันพร้อมป้ายบอกชัดว่า "ไม่ใช่ ณ เวลาเกิดเหตุ" (ลูกค้าอาจอัปเดตโปรแกรมไปแล้ว)
+  function metaNow(own, devNow) {
+    if (own) return esc(own);
+    if (devNow) return esc(devNow) + '<br><small style="color:var(--muted);font-family:var(--font)">ค่าปัจจุบันของเครื่องนี้ — ไม่ใช่ ณ เวลาเกิดเหตุ</small>';
+    return metaVal('');
+  }
   function fmtDT(iso) { var d = new Date(iso); return !iso || isNaN(d) ? 'ไม่ทราบ' : d.toLocaleString('th-TH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
   function copyText(t, msg) { var done = function () { toast(msg); }; if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, function () { toast(t); }); else toast(t); }
   function vioSig(v) { return v.time + '|' + v.type + '|' + v.deviceId; }
@@ -612,7 +623,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     var tl = [v].concat(rel.slice(0, 10)).map(function (x) { return '<li' + (x === v ? ' class="cur"' : '') + '><span class="t">' + esc(x.type || 'VIOLATION') + '</span><span>' + esc(fmtDT(x.time)) + '</span><small>เครื่อง ' + esc((x.deviceId || '').slice(0, 8)) + '…' + (x === v ? ' · รายการนี้' : '') + '</small></li>'; }).join('');
     $('vioTag').textContent = v.type || 'VIOLATION'; $('vioTitle').textContent = info.th;
     $('vioBody').innerHTML = '<div class="note">' + esc(info.note) + '<br><small style="color:var(--muted)">เหตุการณ์เดียวไม่ใช่หลักฐานเด็ดขาด — ดูประกอบกับประวัติและข้อมูลลูกค้าก่อนตัดสินใจระงับคีย์</small></div>'
-      + '<div><h3>เหตุการณ์</h3><dl class="vd-dl"><dt>ชนิด</dt><dd class="mono">' + esc(v.type || '-') + '</dd><dt>เวลา</dt><dd>' + esc(fmtDT(v.time)) + ' · ' + esc(ago(v.time)) + '</dd><dt>คีย์</dt><dd class="mono">' + esc(validKey ? v.licenseKey : 'ไม่มีคีย์') + '</dd><dt>การละเมิดของคีย์นี้ (30 วัน)</dt><dd>' + n30 + ' ครั้ง</dd><dt>เวอร์ชันโปรแกรม</dt><dd>' + metaVal(v.appVersion ? 'v' + v.appVersion : '') + '</dd><dt>ระบบ / แพลตฟอร์ม</dt><dd class="mono">' + metaVal(v.platform) + '</dd><dt>ตำแหน่ง / IP</dt><dd style="color:var(--muted)">ยังไม่ได้เก็บข้อมูลนี้</dd></dl></div>'
+      + '<div><h3>เหตุการณ์</h3><dl class="vd-dl"><dt>ชนิด</dt><dd class="mono">' + esc(v.type || '-') + '</dd><dt>เวลา</dt><dd>' + esc(fmtDT(v.time)) + ' · ' + esc(ago(v.time)) + '</dd><dt>คีย์</dt><dd class="mono">' + esc(validKey ? v.licenseKey : 'ไม่มีคีย์') + '</dd><dt>การละเมิดของคีย์นี้ (30 วัน)</dt><dd>' + n30 + ' ครั้ง</dd><dt>เวอร์ชันโปรแกรม</dt><dd>' + metaNow(v.appVersion ? 'v' + v.appVersion : '', dev && dev.appVersion ? 'v' + dev.appVersion : '') + '</dd><dt>ระบบ / แพลตฟอร์ม</dt><dd class="mono">' + metaNow(v.platform, dev && dev.platform) + '</dd><dt>ตำแหน่ง / IP</dt><dd style="color:var(--muted)">ยังไม่ได้เก็บข้อมูลนี้</dd></dl></div>'
       + '<div><h3>รายละเอียดจากระบบ</h3>' + vioDetailRows(v.details) + '</div>'
       + '<div><h3>ข้อมูลคีย์และที่มา</h3>' + keyHtml + '</div>'
       + '<div><h3>เครื่องที่เกี่ยวข้อง</h3>' + devHtml + othersHtml + '</div>'
