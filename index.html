@@ -994,9 +994,25 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       var l0 = licOf(key) || {}, noExp = document.getElementById('ecNoExp').checked, expV = document.getElementById('ecExp').value, maxV = document.getElementById('ecMax').value;
       if (!noExp && !expV) { toast('⚠️ เลือกวันหมดอายุ หรือติ๊ก "ไม่หมดอายุ"'); return; }
       if (!(Number(maxV) >= 1 && Number(maxV) <= 50 && Math.floor(Number(maxV)) === Number(maxV))) { toast('⚠️ จำนวนเครื่องต้องเป็นเลขเต็ม 1-50'); return; }
-      var expChanged = (noExp ? '' : expV) !== (l0.expiryDate ? String(l0.expiryDate).slice(0, 10) : ''), maxChanged = Number(maxV) !== Number(l0.maxSessions);
-      if (isStoreKey(l0) && (expChanged || maxChanged) && !confirm('คีย์นี้ออกจากร้าน — การแก้วันหมดอายุ/จำนวนเครื่องจะเปลี่ยนที่ License Server อย่างเดียว ฐานข้อมูลร้านยังเห็นค่าเดิม ยืนยันบันทึกหรือไม่?')) return;
-      act('adminUpdate', { key: key, customerName: name, contact: document.getElementById('ecContact').value, payment: document.getElementById('ecPay').value, note: document.getElementById('ecNote').value, expiryDate: noExp ? '' : expV, maxSessions: Number(maxV) }, 'บันทึกข้อมูลลูกค้าแล้ว').then(function () { S.editing = null; render(); });
+      // [2026-11-18 ผู้ใช้สั่ง] กด "บันทึก" → หน้ายืนยันของคอนโซล (แทนกล่อง confirm ของเบราว์เซอร์) แสดงรายการที่จะเปลี่ยน เดิม → ใหม่
+      var newExp = noExp ? '' : expV, oldExp = l0.expiryDate ? String(l0.expiryDate).slice(0, 10) : '';
+      var payload = { key: key, customerName: name, contact: document.getElementById('ecContact').value, payment: document.getElementById('ecPay').value, note: document.getElementById('ecNote').value, expiryDate: newExp, maxSessions: Number(maxV) };
+      var show = function (v) { return v === '' || v == null ? '(ว่าง)' : String(v); }, ch = [];
+      if (name !== String(l0.customerName || '')) ch.push(['ชื่อลูกค้า', show(l0.customerName) + ' → ' + show(name)]);
+      if (payload.contact !== String(l0.contact || '')) ch.push(['ช่องทางติดต่อ', show(l0.contact) + ' → ' + show(payload.contact)]);
+      if (payload.payment !== String(l0.payment || '')) ch.push(['อ้างอิงการชำระ / ราคา', show(l0.payment) + ' → ' + show(payload.payment)]);
+      if (payload.note !== String(l0.note || '')) ch.push(['หมายเหตุ', show(l0.note) + ' → ' + show(payload.note)]);
+      if (newExp !== oldExp) ch.push(['วันหมดอายุ', (oldExp || 'ไม่หมดอายุ') + ' → ' + (newExp || 'ไม่หมดอายุ')]);
+      if (Number(maxV) !== Number(l0.maxSessions)) ch.push(['จำนวนเครื่องสูงสุด', l0.maxSessions + ' → ' + Number(maxV)]);
+      if (!ch.length) { toast('ไม่มีการเปลี่ยนแปลง'); return; }
+      var storeWarn = isStoreKey(l0) && (newExp !== oldExp || Number(maxV) !== Number(l0.maxSessions));
+      openDialog({
+        title: 'ยืนยันการแก้ไขข้อมูลคีย์?', icon: 'check', sub: key, danger: storeWarn,
+        body: storeWarn ? 'คีย์นี้ออกจากร้าน — การแก้วันหมดอายุ/จำนวนเครื่องจะเปลี่ยนที่ License Server อย่างเดียว ฐานข้อมูลร้านยังเห็นค่าเดิม (หน้าโปรไฟล์/ปุ่มอัปเดตคำนวณสิทธิ์จากฝั่งร้าน)' : 'ตรวจสอบรายการที่จะเปลี่ยนก่อนบันทึก — ระบบจดลงประวัติของคีย์',
+        rows: [['ลูกค้า', l0.customerName]].concat(ch),
+        confirmText: function () { return 'ยืนยันบันทึก'; },
+        submit: function () { return api('adminUpdate', payload).then(function () { S.editing = null; return afterAction('บันทึกข้อมูลลูกค้าแล้ว'); }); }
+      });
     } else if (a === 'paydel') {
       if (confirm('ลบรายการรายรับนี้? ยอดรวมจะลดลงตาม')) act('adminDeletePayment', { key: S.sel, paymentId: b.dataset.id }, 'ลบรายการรายรับแล้ว');
     } else if (a === 'slipadd') {
