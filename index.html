@@ -71,6 +71,9 @@ tr.row[aria-selected=true] td{background:var(--accent-soft)}
 td.no,th.no{width:58px;text-align:center;color:var(--muted);font-variant-numeric:tabular-nums;padding-left:8px;padding-right:8px}
 td.no{font:600 12px var(--mono)}
 .cust{font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.prog{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:6px;margin-left:6px;vertical-align:middle;letter-spacing:.2px}
+.prog.dogflow{background:rgba(37,99,235,.14);color:#2563eb}.prog.dogmeta{background:rgba(147,51,234,.16);color:#9333ea}.prog.other{background:var(--surface2);color:var(--muted)}
+.chip b{font-weight:700;margin-left:5px;opacity:.75}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
@@ -318,6 +321,11 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
             <button class="chip" data-f="soon" aria-pressed="false">ใกล้หมดอายุ</button>
             <button class="chip" data-f="bad" aria-pressed="false">หมดอายุ/ระงับ</button>
           </div>
+          <div class="seg" id="pflt" title="กรองตามโปรแกรม">
+            <button class="chip" data-p="all" aria-pressed="true">ทุกโปรแกรม</button>
+            <button class="chip" data-p="dogflow" aria-pressed="false">DogFlow<b></b></button>
+            <button class="chip" data-p="dogmeta" aria-pressed="false">DogMeta<b></b></button>
+          </div>
           <div class="sp"></div>
           <input class="search" id="q" placeholder="ค้นหาคีย์ / ชื่อลูกค้า" aria-label="ค้นหา">
         </header>
@@ -341,6 +349,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
               <label>อายุ (วัน · 0 = ไม่หมดอายุ)<input id="fd" value="30" inputmode="numeric"></label>
               <label>จำนวนเครื่อง<select id="fm"><option>1</option><option>2</option><option selected>3</option><option>5</option><option>10</option></select></label>
             </div>
+            <label>โปรแกรมที่คีย์ใช้ได้ <span class="opt">(คีย์ใช้ข้ามโปรแกรมไม่ได้)</span><select id="fp"><option value="dogflow" selected>DogFlow</option><option value="dogmeta">DogMeta</option></select></label>
             <button class="btn primary" id="gen" type="submit"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>สร้างคีย์</button>
             <label>แนบสลิปโอนเงิน <span class="opt">(ไม่บังคับ · JPG/PNG · ย่อรูปให้อัตโนมัติ)</span><input id="fslip" type="file" accept="image/*" multiple></label>
             <div class="hint">เก็บเท่าที่จำเป็นต่อการดูแลลูกค้า — ไม่ต้องใส่เลขบัตรประชาชน ที่อยู่ หรือรหัสผ่านของลูกค้า · สลิปเก็บเป็นไฟล์ส่วนตัวใน Google Drive ของคุณ</div>
@@ -374,7 +383,11 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   'use strict';
   var DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbw1oB6q0q5zT80i7hPmeFLbhQ4Bu0N-M7rT2jvk6gaWtuW6qLV0ntwqQQjDyClzCBostg/exec';
   var $ = function (id) { return document.getElementById(id); };
-  var S = { url: '', token: '', data: null, sel: null, flt: 'all', q: '', busy: false, editing: null };
+  var S = { url: '', token: '', data: null, sel: null, flt: 'all', prog: 'all', q: '', busy: false, editing: null };
+  // [2026-11-18] โปรแกรมของคีย์ (ว่าง = dogflow) · ป้ายสีแยกโปรแกรม · ตัวกรองตามโปรแกรม
+  var PROG_LABEL = { dogflow: 'DogFlow', dogmeta: 'DogMeta' };
+  function progOf(l) { return (l && l.product) || 'dogflow'; }
+  function progBadge(l) { var p = progOf(l); return '<span class="prog ' + (PROG_LABEL[p] ? p : 'other') + '">' + esc(PROG_LABEL[p] || p) + '</span>'; }
 
   /* ---------- เก็บค่าในเบราว์เซอร์ (ใช้ได้ไม่ได้ก็ไม่พัง) ---------- */
   function store(kind) { try { return kind === 'local' ? window.localStorage : window.sessionStorage; } catch (e) { return null; } }
@@ -464,6 +477,8 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   /* ---------- วาดหน้า ---------- */
   function render() {
     var all = S.data.licenses.map(function (l, i) { var e = enrich(l); e.no = i + 1; return e; });
+    var pcnt = {}; all.forEach(function (e) { var pp = progOf(e.l); pcnt[pp] = (pcnt[pp] || 0) + 1; });
+    document.querySelectorAll('#pflt .chip').forEach(function (c) { var bb = c.querySelector('b'); if (bb) bb.textContent = pcnt[c.dataset.p] || 0; });
     var active = all.filter(function (e) { return e.st === 'ok' || e.st === 'soon'; }).length;
     var devs = all.reduce(function (n, e) { return n + e.live.length; }, 0);
     var soon = all.filter(function (e) { return e.st === 'soon'; }).length;
@@ -483,13 +498,14 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       if (S.flt === 'ok' && e.st !== 'ok') return false;
       if (S.flt === 'soon' && e.st !== 'soon') return false;
       if (S.flt === 'bad' && e.st !== 'bad' && e.st !== 'off') return false;
-      return !S.q || (e.l.key + ' ' + e.l.customerName).toLowerCase().indexOf(S.q) >= 0;
+      if (S.prog !== 'all' && progOf(e.l) !== S.prog) return false;
+      return !S.q || (e.l.key + ' ' + e.l.customerName + ' ' + (e.l.product || 'dogflow')).toLowerCase().indexOf(S.q) >= 0;
     });
     if (!all.some(function (e) { return e.l.key === S.sel; })) S.sel = all.length ? all[0].l.key : null;
     $('listCount').textContent = list.length === all.length ? all.length + ' คีย์' : 'แสดง ' + list.length + ' จาก ' + all.length + ' คีย์';
     $('rows').innerHTML = list.length ? list.map(function (e) {
       var full = e.live.length >= e.l.maxSessions;
-      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + (e.l.expiryDate ? '<div style="font-size:11px;opacity:.75">' + leftHtml(e.l.expiryDate) + '</div>' : '') + '</td><td class="amt' + (e.paid ? '' : ' zero') + '">' + (e.paid ? fmtMoney(e.paid) : '–') + '</td></tr>';
+      return '<tr class="row" data-k="' + esc(e.l.key) + '" tabindex="0" aria-selected="' + (e.l.key === S.sel) + '"><td class="no">' + e.no + '</td><td class="key">' + esc(e.l.key) + '</td><td class="cust">' + esc(e.l.customerName) + progBadge(e.l) + '</td><td><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></td><td><span class="seats' + (full ? ' full' : '') + '"><span class="bar"><i style="width:' + Math.min(100, Math.round(e.live.length / e.l.maxSessions * 100)) + '%"></i></span>' + e.live.length + '/' + e.l.maxSessions + '</span></td><td>' + esc(fmtDate(e.l.expiryDate)) + (e.l.expiryDate ? '<div style="font-size:11px;opacity:.75">' + leftHtml(e.l.expiryDate) + '</div>' : '') + '</td><td class="amt' + (e.paid ? '' : ' zero') + '">' + (e.paid ? fmtMoney(e.paid) : '–') + '</td></tr>';
     }).join('') : '<tr><td colspan="7" class="empty">' + (all.length ? 'ไม่พบคีย์ตามตัวกรอง' : 'ยังไม่มีคีย์ — สร้างคีย์แรกได้ที่ช่องด้านขวา') + '</td></tr>';
 
     renderDetail(all);
@@ -544,7 +560,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     var l = e.l;
     box.innerHTML = '<div class="det"><div><div class="sub">คีย์ที่เลือก · ลำดับที่ ' + e.no + ' จาก ' + all.length + '</div><div class="kk"><span>' + esc(l.key) + '</span><button class="btn" data-act="copy" style="padding:4px 9px;font-size:12px">คัดลอก</button></div></div>'
       + (S.editing === l.key ? editForm(l) : '')
-      + '<dl class="dl"><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>เปิดใช้ครั้งแรก</dt><dd>' + firstActHtml(l) + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (l.expiryDate ? ' · ' + leftHtml(l.expiryDate) : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
+      + '<dl class="dl"><dt>โปรแกรม</dt><dd>' + progBadge(l) + '</dd><dt>ลูกค้า</dt><dd>' + esc(l.customerName) + '</dd><dt>ติดต่อ</dt><dd>' + contactHtml(l.contact) + '</dd><dt>ชำระ / ราคา</dt><dd>' + esc(l.payment || '-') + '</dd><dt>หมายเหตุ</dt><dd>' + esc(l.note || '-') + '</dd><dt>สร้างเมื่อ</dt><dd>' + esc(l.createdAt ? fmtDate(l.createdAt) : '-') + '</dd><dt>เปิดใช้ครั้งแรก</dt><dd>' + firstActHtml(l) + '</dd><dt>สถานะ</dt><dd><span class="pill ' + PILL[e.st] + '">' + LBL[e.st] + '</span></dd><dt>หมดอายุ</dt><dd>' + esc(fmtDate(l.expiryDate)) + (l.expiryDate ? ' · ' + leftHtml(l.expiryDate) : '') + '</dd><dt>เครื่องที่ใช้</dt><dd>' + e.live.length + ' / ' + l.maxSessions + '</dd></dl>'
       + paysHtml(l)
       + slipsHtml(l)
       + logHtml(l)
@@ -929,6 +945,8 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   });
   document.addEventListener('click', function (ev) {
     var chip = ev.target.closest('#flt .chip');
+    var pchip = ev && ev.target && ev.target.closest ? ev.target.closest('#pflt .chip') : null;
+    if (pchip) { S.prog = pchip.dataset.p; document.querySelectorAll('#pflt .chip').forEach(function (c) { c.setAttribute('aria-pressed', c === pchip); }); render(); return; }
     if (chip) { S.flt = chip.dataset.f; document.querySelectorAll('#flt .chip').forEach(function (c) { c.setAttribute('aria-pressed', c === chip); }); render(); return; }
     var vmore = ev.target.closest('[data-vmore]');
     if (vmore) { S.vioAll = !S.vioAll; render(); return; }
@@ -986,7 +1004,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
   $('createForm').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var out = $('genOut'), btn = $('gen'); out.hidden = true; btn.disabled = true;
-    api('adminCreate', { customerName: $('fc').value.trim(), amount: $('fam').value, contact: $('fct').value, payment: $('fpay').value, note: $('fnote').value, days: $('fd').value.trim(), maxSessions: $('fm').value })
+    api('adminCreate', { customerName: $('fc').value.trim(), amount: $('fam').value, contact: $('fct').value, payment: $('fpay').value, note: $('fnote').value, days: $('fd').value.trim(), maxSessions: $('fm').value, product: $('fp').value })
       .then(function (r) {
         out.className = 'msg ok'; out.hidden = false;
         out.innerHTML = 'สร้างแล้ว: <b class="key">' + esc(r.key) + '</b> — ส่งคีย์นี้ให้ลูกค้า';
