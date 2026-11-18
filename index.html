@@ -570,6 +570,7 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
           return '<div class="dev"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div><div class="t"><b>' + esc(s.deviceName) + '</b><span>ใช้ล่าสุด ' + esc(ago(s.lastSeen)) + (stale ? ' · ไม่ออนไลน์นาน' : '') + (s.appVersion ? ' · v' + esc(s.appVersion) : '') + '</span></div><button class="x" title="ลบเครื่องนี้" aria-label="ลบเครื่องนี้" data-act="rmdev" data-dev="' + esc(s.deviceId) + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>';
         }).join('') : '<div class="dev" style="color:var(--muted)">ยังไม่มีเครื่องที่เปิดใช้งาน</div>')
       + '</div><div class="acts">'
+      + '<button class="btn" data-act="setprod" title="เปลี่ยนโปรแกรมที่คีย์ใช้ได้ (เฉพาะคีย์ที่สร้างในคอนโซล)"><svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg>เปลี่ยนโปรแกรม…</button>'
       + (l.expiryDate ? '<button class="btn" data-act="extend"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>ต่ออายุ…</button>' : '')
       + (l.status === 'active'
           ? '<button class="btn danger" data-act="revoke"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>ระงับคีย์</button>'
@@ -804,6 +805,21 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       submit: function (v) { return api('adminSetStatus', { key: key, status: 'active', detail: v.detail }).then(function () { return afterAction('เปิดใช้คีย์อีกครั้งแล้ว'); }); }
     });
   }
+  // [2026-11-18] เปลี่ยนโปรแกรมของคีย์ (DogFlow/DogMeta) — ใช้กับคีย์ที่สร้างในคอนโซลเท่านั้น · คีย์ที่ออกจากออเดอร์/คำขอทดลองของร้านมีแถวในฐานข้อมูลร้านด้วย (ปุ่ม "อัปเดตเลย" ตรวจจากแถวนั้น) → เปลี่ยนที่นี่ฝั่งเดียวทำให้สองระบบไม่ตรงกัน จึงไม่อนุญาต
+  function isStoreKey(l) { return /^เว็บ /.test(String(l.payment || '')) || String(l.payment || '') === 'ทดลองฟรี' || /^ออเดอร์ DF\d{8}/.test(String(l.note || '')); }
+  function dlgSetProduct(key) {
+    var l = licOf(key); if (!l) return;
+    if (isStoreKey(l)) { toast('⚠️ คีย์นี้ออกจากร้าน (ออเดอร์/ทดลองฟรี) — เปลี่ยนโปรแกรมที่คอนโซลไม่ได้ เพราะร้านกับ License Server จะไม่ตรงกัน'); return; }
+    var cur = progOf(l);
+    return openDialog({
+      title: 'เปลี่ยนโปรแกรมของคีย์นี้?', icon: 'check', sub: key,
+      body: 'คีย์จะใช้ได้กับโปรแกรมที่เลือกเท่านั้น โปรแกรมอีกตัวจะถูกปฏิเสธ (เครื่องที่ผูกอยู่แล้วคงเดิม) · ใช้กับคีย์ที่สร้างในคอนโซลเท่านั้น',
+      rows: [['ลูกค้า', l.customerName], ['โปรแกรมตอนนี้', PROG_LABEL[cur] || cur]],
+      fields: [{ id: 'product', type: 'select', label: 'โปรแกรมใหม่', required: true, options: [['', '— เลือกโปรแกรม —'], ['dogflow', 'DogFlow'], ['dogmeta', 'DogMeta']], check: function (v) { return v === cur ? 'คีย์นี้เป็นของโปรแกรมนี้อยู่แล้ว' : ''; } }],
+      confirmText: function () { return 'เปลี่ยนโปรแกรม'; },
+      submit: function (v) { return api('adminSetProduct', { key: key, product: v.product }).then(function () { return afterAction('เปลี่ยนโปรแกรมของคีย์แล้ว'); }); }
+    });
+  }
   // [2026-10-17] ลบคีย์ถาวรออกจากรายการ: ต้องเลือกเหตุผล + พิมพ์คีย์ยืนยัน + ติ๊กรับทราบ · ฝั่งเซิร์ฟเวอร์เก็บสำเนา (รายรับ/สลิป/ประวัติ) ไว้ในชีต DeletedLicenses
   function dlgDeleteKey(key) {
     var l = licOf(key); if (!l) return;
@@ -983,6 +999,8 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       dlgExtend(S.sel);
     } else if (a === 'revoke') {
       dlgRevoke(S.sel);
+    } else if (a === 'setprod') {
+      dlgSetProduct(S.sel);
     } else if (a === 'restore') {
       dlgRestore(S.sel);
     } else if (a === 'delkey') {
