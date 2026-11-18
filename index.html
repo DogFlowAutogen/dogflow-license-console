@@ -528,6 +528,11 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
       + '<label>ช่องทางติดต่อ<input id="ecContact" maxlength="120" value="' + esc(l.contact) + '" autocomplete="off"></label>'
       + '<label>อ้างอิงการชำระ / ราคา<input id="ecPay" maxlength="120" value="' + esc(l.payment) + '" autocomplete="off"></label>'
       + '<label>หมายเหตุ<input id="ecNote" maxlength="300" value="' + esc(l.note) + '" autocomplete="off"></label>'
+      // [2026-11-18] แก้วันหมดอายุ (ตั้งวันที่ตรงๆ / ไม่หมดอายุ) และจำนวนเครื่องสูงสุด · บันทึกในประวัติคีย์
+      + '<label>วันหมดอายุ<input id="ecExp" type="date" value="' + esc(l.expiryDate ? String(l.expiryDate).slice(0, 10) : '') + '"' + (l.expiryDate ? '' : ' disabled') + '></label>'
+      + '<label style="display:flex;gap:8px;align-items:center;grid-template-columns:none"><input type="checkbox" id="ecNoExp" style="width:auto"' + (l.expiryDate ? '' : ' checked') + '> ไม่หมดอายุ</label>'
+      + '<label>จำนวนเครื่องสูงสุด<input id="ecMax" type="number" min="1" max="50" step="1" value="' + esc(l.maxSessions) + '"></label>'
+      + (isStoreKey(l) ? '<div style="font-size:12px;color:var(--warn)">⚠ คีย์นี้ออกจากร้าน — แก้วันหมดอายุ/จำนวนเครื่องที่นี่เปลี่ยนที่ License Server อย่างเดียว ฐานข้อมูลร้านยังเห็นค่าเดิม (หน้าโปรไฟล์/ปุ่มอัปเดตคำนวณสิทธิ์จากฝั่งร้าน)</div>' : '')
       + '<div class="acts"><button class="btn primary" data-act="saveedit">บันทึก</button><button class="btn" data-act="canceledit">ยกเลิก</button></div></div>';
   }
   function fmtSize(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
@@ -986,7 +991,12 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     } else if (a === 'saveedit') {
       var key = S.sel, name = document.getElementById('ecName').value.trim();
       if (!name) { toast('⚠️ กรุณาใส่ชื่อลูกค้า'); return; }
-      act('adminUpdate', { key: key, customerName: name, contact: document.getElementById('ecContact').value, payment: document.getElementById('ecPay').value, note: document.getElementById('ecNote').value }, 'บันทึกข้อมูลลูกค้าแล้ว').then(function () { S.editing = null; render(); });
+      var l0 = licOf(key) || {}, noExp = document.getElementById('ecNoExp').checked, expV = document.getElementById('ecExp').value, maxV = document.getElementById('ecMax').value;
+      if (!noExp && !expV) { toast('⚠️ เลือกวันหมดอายุ หรือติ๊ก "ไม่หมดอายุ"'); return; }
+      if (!(Number(maxV) >= 1 && Number(maxV) <= 50 && Math.floor(Number(maxV)) === Number(maxV))) { toast('⚠️ จำนวนเครื่องต้องเป็นเลขเต็ม 1-50'); return; }
+      var expChanged = (noExp ? '' : expV) !== (l0.expiryDate ? String(l0.expiryDate).slice(0, 10) : ''), maxChanged = Number(maxV) !== Number(l0.maxSessions);
+      if (isStoreKey(l0) && (expChanged || maxChanged) && !confirm('คีย์นี้ออกจากร้าน — การแก้วันหมดอายุ/จำนวนเครื่องจะเปลี่ยนที่ License Server อย่างเดียว ฐานข้อมูลร้านยังเห็นค่าเดิม ยืนยันบันทึกหรือไม่?')) return;
+      act('adminUpdate', { key: key, customerName: name, contact: document.getElementById('ecContact').value, payment: document.getElementById('ecPay').value, note: document.getElementById('ecNote').value, expiryDate: noExp ? '' : expV, maxSessions: Number(maxV) }, 'บันทึกข้อมูลลูกค้าแล้ว').then(function () { S.editing = null; render(); });
     } else if (a === 'paydel') {
       if (confirm('ลบรายการรายรับนี้? ยอดรวมจะลดลงตาม')) act('adminDeletePayment', { key: S.sel, paymentId: b.dataset.id }, 'ลบรายการรายรับแล้ว');
     } else if (a === 'slipadd') {
@@ -1006,6 +1016,10 @@ td.amt{font:600 12.5px var(--mono)}td.amt.zero{color:var(--muted);font-weight:40
     } else if (a === 'delkey') {
       dlgDeleteKey(S.sel);
     }
+  });
+  // [2026-11-18] ติ๊ก "ไม่หมดอายุ" → ปิดช่องเลือกวันที่ในฟอร์มแก้ไขคีย์
+  document.addEventListener('change', function (ev) {
+    if (ev.target && ev.target.id === 'ecNoExp') { var ex = document.getElementById('ecExp'); if (ex) ex.disabled = ev.target.checked; }
   });
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Enter') { var r = ev.target.closest && ev.target.closest('tr.row'); if (r) { S.sel = r.dataset.k; render(); } }
